@@ -29,15 +29,18 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
+//TODO(sigrud) Add sha256 Authentication for MySQL alternative authentication
+//TODO(sigrud) Add cashing_sha2_password for MySQL alternative authentication
+//TODO(sigrud) Use virtuallock(windows) or mlock(linux) to prevent memory dump of username and password
+//TODO(sigrud) ASYNC callbacks using the username, signals maybe.
+
 #ifndef MARIADB_H
 #define MARIADB_H
 
 #define DEBUG_OUTPUT
 
 #include <vector>
-#include <random>
 
-#include <core/crypto/crypto_core.h>
 #include <core/reference.h>
 #include <core/io/stream_peer_tcp.h>
 #include <core/os/thread.h>
@@ -50,13 +53,32 @@ constexpr char *kCharacterCollationName = "utf8_general_ci";
 class MariaDB : public Reference {
 	GDCLASS(MariaDB, Reference);
 
+public:
+	enum AuthSrc {
+		AUTH_SRC_UNKNOWN,
+		AUTH_SRC_SCRIPT,
+		AUTH_SRC_CONSOLE,
+		AUTH_SRC_LAST,
+	};
+
+	enum AuthType {
+		AUTH_TYPE_UNKNOWN,
+		AUTH_TYPE_MYSQL_NATIVE,
+		AUTH_TYPE_ED25519,
+		AUTH_TYPE_LAST,
+	};
+
+private:
 	enum class ErrorCodes : uint32_t {
 		NO_ERROR = 0,
 		SERVER_PROTOCOL_INCOMPATIBLE = (1UL << 0),
 		CLIENT_PROTOCOL_INCOMPATIBLE = (1UL << 1),
-		AUTH_PLUGIN_REQUIRED = (1UL << 2),
+		AUTH_PLUGIN_NOT_SET = (1UL << 2),
 		AUTH_PLUGIN_INCOMPATIBLE = (1UL << 3),
 		AUTH_FAILED = (1UL << 4),
+		USERNAME_EMPTY = (1UL << 5),
+		PASSWORD_EMPTY = (1UL << 6),
+		DB_EMPTY = (1UL << 7),
 	};
 
 	enum class Capabilities : uint32_t {
@@ -65,7 +87,7 @@ class MariaDB : public Reference {
 		FOUND_ROWS = (1UL << 1),
 		LONG_FLAG = (1UL << 2), //not used in MariaDB
 		CONNECT_WITH_DB = (1UL << 3),
-		NO_SCHEMA = (1UL << 4),  //not used in MariaDB
+		NO_SCHEMA = (1UL << 4), //not used in MariaDB
 		NO_DB_TABLE_COLUMN = (1UL << 4), //Alternate name, not used in MariaDB
 		COMPRESS = (1UL << 5),
 		ODBC = (1UL << 6), //not used in Maria
@@ -78,8 +100,8 @@ class MariaDB : public Reference {
 		TRANSACTIONS_MARIA = (1UL << 12), //mariadb
 		TRANSACTIONS_MYSQL = (1UL << 13), //MySQL
 		SECURE_CONNECTION = (1UL << 13), //mariadb
-		RESERVED = (1UL << 14),//not used in Maria
-		RESERVED2 = (1UL << 15),//Not in Maria Docs but needed
+		RESERVED = (1UL << 14), //not used in Maria
+		RESERVED2 = (1UL << 15), //Not in Maria Docs but needed
 		MULTI_STATEMENTS = (1UL << 16),
 		MULTI_RESULTS = (1UL << 17),
 		PS_MULTI_RESULTS = (1UL << 18),
@@ -111,10 +133,12 @@ class MariaDB : public Reference {
 		uint16_t char_set;
 		uint8_t field_type;
 	};
-	const std::vector<String> kAuthTypeNames = { "unknown", "mysql_native_password", "client_ed25519" }; 
 
-	int pref_auth_type_ = AUTH_TYPE_MYSQL_NATIVE;
-	bool async_ = false;
+	const std::vector<String> kAuthTypeServerNames = { "unknown", "mysql_native_password", "client_ed25519" }; 
+
+	AuthSrc auth_src_ = AuthSrc::AUTH_SRC_UNKNOWN;
+	AuthType auth_type_ = AuthType::AUTH_TYPE_UNKNOWN;
+	bool is_pre_hashed_ = false;
 	bool authenticated_ = false;
 	uint32_t client_capabilities_ = 0;
 	uint32_t client_extended_capabilities_ = 0;
@@ -125,37 +149,38 @@ class MariaDB : public Reference {
 	bool is_mysql_ = false;
 	bool tls_enabled_ = false;
 
-	//TODO(sigrud) Use virtuallock(windows) or mlock(linux) to prevent memory dump of seed_, username and password hash
-	std::mt19937 Generator;
-	size_t seed_ = NULL;
-
-	//TODO(sigrud) remove once pashword hash unscramlbe is implemented
-	std::vector<uint8_t> temp_password_sha512_; 
-
 	std::vector<uint8_t> username_;
-	std::vector<uint8_t> password_hash_;
+	std::vector<uint8_t> password_hashed_;
 	std::vector<uint8_t> dbname_;
 
 	StreamPeerTCP stream_;
 	String server_version_;
 
-	/*! \brief	Adds the packet size and sequence number to the beginning of the packet,
-	 *			it must be used once just before sending stream to server.
+
+	/**
+	 * \brief			Adds the packet size and sequence number to the beginning of the packet,
+	 *					it must be used once just before sending stream to server.
+	 * \param stream	std::vector<uint8_t> the stream to be modified.
+	 * \param sequance	int 
 	 */
 	void m_add_packet_header(std::vector<uint8_t> &stream, int sequence);
-	void m_client_protocol_v41(const int srvr_auth_type, const std::vector<uint8_t> srvr_salt);
+	void m_client_protocol_v41(const AuthType srvr_auth_type, const std::vector<uint8_t> srvr_salt);
 	int m_connect(String hostname, int port);
 
-	template <typename T>
-	std::vector<T> gdstring_to_vector(String string);
+	void m_get_console_auth();
+
 	String m_get_gdstring_from_buf(std::vector<uint8_t> buf, size_t &start_pos);
 
-	//TODO(sigrud) Add sha256 Authentication for MySQL
-	//TODO(sigrud) Finish cashing_sha2_password for MySQL alternative authentication
-	std::vector<uint8_t> m_get_caching_sha2_password_hash(std::vector<uint8_t> srvr_salt);
-	std::vector<uint8_t> m_get_client_ed25519_signature(std::vector<uint8_t> svr_msg);
-	std::vector<uint8_t> m_get_mysql_native_password_hash(std::vector<uint8_t> srvr_salt);
+
 	size_t m_get_packet_length(const std::vector<uint8_t> src_buf, size_t &start_pos);
+
+	/**
+	 * \brief			This method returns the defined hash from the combined and scrambled password_hash_ member.
+	 *
+	 * \param auth_type	enum class AuthType determines what hash is returned from the combined and scrambed hash.
+	 * \return			std::vector<uint8_t>.
+	 */
+	std::vector<uint8_t> m_get_password_hash(const AuthType authtype);
 
 	/**
 	 * \brief			This method returns a string from packets using length encoding.
@@ -168,14 +193,13 @@ class MariaDB : public Reference {
 	 */
 	std::string m_get_packet_string(const std::vector<uint8_t> src_buf, size_t &last_pos, size_t byte_cnt);
 
-	int m_get_server_auth_type(String srvr_auth_name);
+	AuthType m_get_server_auth_type(String srvr_auth_name);
 
 	std::vector<uint8_t> m_recv_data(uint32_t timeout);
 	//TODO(sigrud) Add error log file using the username in the filename
 	void m_print_error(std::string error);
-	void m_print_server_error(const std::vector<uint8_t> src_buffer, size_t &last_pos);
+	void m_handle_server_error(const std::vector<uint8_t> src_buffer, size_t &last_pos);
 	void m_server_init_handshake_v10(const std::vector<uint8_t> src_buffer);
-	void m_set_seed(size_t seed = NULL);
 	void m_update_password(String password);
 	void m_update_username(String username);
 
@@ -183,34 +207,43 @@ protected:
 	static void _bind_methods();
 
 public:
-	enum AuthType {
-		AUTH_TYPE_UNKNOWN,
-		AUTH_TYPE_MYSQL_NATIVE, //default
-		AUTH_TYPE_ED25519,
-	};
-
-	//blocking members
-	int connect_db(String hostname, String username, String password, int port, String dbname);
+	int connect_db(String hostname, int port, String dbname, String username = "", String password = "");
 	void disconnect_db();
 
 	//int execute(String command);
 	
-	//TODO(sigrud) ASYNC callback using the username, signal maybe?
 	Variant query(String sql_stmt);
+
+	/**
+	* \brief			Used for sql statement where only success or error return is needed.
+	*
+	* \param cmd		String sql_statement or server command.
+	* \return			int 0 for ok or error code.
+	*/
+	int command(String cmd);
 
 	void update_dbname(String dbname);
 
 	//TODO(sigrud) Implement SSL/TLS
 	//void tls_enable(bool enable);
 
-	void set_authtype(AuthType auth_type, String password);
+	/**
+	 * \brief				This method sets the authentication type used.
+	 *
+	 * \param auth_src		enum AuthSrc determines where the authentication parameters are requested..
+	 * \param auth_type		enum AuthType determines what authoriztion type will be statically used.
+	 * \param is_pre_hash	bool if set the password used will be hashed by the required type before used.
+	 * \return 				int 0 = no error, see error enum class ErrorCode
+	 */
+	int set_authtype(AuthSrc auth_src, AuthType auth_type, bool is_pre_hashed = true);
 
-	//async members
-	//void connect_db_async(String host, String user, String pass, int port);
+	//TODO(sigrud) Async Callbacks
 
 	MariaDB();
 	~MariaDB();
 };
 
+VARIANT_ENUM_CAST(MariaDB::AuthSrc);
 VARIANT_ENUM_CAST(MariaDB::AuthType);
+
 #endif

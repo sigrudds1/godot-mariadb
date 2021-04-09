@@ -32,6 +32,8 @@
 #ifndef CONVERSIONS_H
 #define CONVERSIONS_H
 
+#include <core/ustring.h>
+
 #include <cassert>
 #include <cstdint>
 #include <vector>
@@ -51,6 +53,13 @@ T bytes_to_num(const uint8_t *src, const size_t byte_count, size_t &start_pos) {
 template <typename T>
 uint8_t *cast_to_uint8_t(const T *ptr) {
 	return reinterpret_cast<uint8_t *>(const_cast<char *>(ptr));
+}
+
+template <typename T>
+std::vector<T> gdstring_to_vector(String string) {
+	T *t = (T *)string.utf8().ptrw();
+	std::vector<T> vec(t, t + string.length());
+	return vec;
 }
 
 template <typename T>
