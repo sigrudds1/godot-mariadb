@@ -63,6 +63,19 @@ std::vector<T> gdstring_to_vector(String string) {
 }
 
 template <typename T>
+std::vector<T> gd_hexstring_to_vector(const String &hex) {
+	std::vector<T> bytes;
+	for (unsigned int i = 0; i < hex.length(); i += 2) {
+		String byteString = hex.substr(i, 2);
+		T byte = (T)strtol(byteString.utf8().ptrw(), NULL, 16);
+		bytes.push_back(byte);
+	}
+
+	return bytes;
+}
+
+
+template <typename T>
 std::vector<uint8_t> value_to_bytestream_vec(T value, size_t stream_bytes) {
 	std::vector<uint8_t> vec;
 	for (size_t i = 0; i < stream_bytes; i++) {

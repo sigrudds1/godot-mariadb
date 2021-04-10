@@ -84,7 +84,7 @@ void MariaDB::m_client_protocol_v41(const AuthType srvr_auth_type, const std::ve
 	std::vector<uint8_t> srvr_response;
 	std::vector<uint8_t> srvr_auth_msg;
 	uint8_t seq_num = 0;
-	AuthType auth_type = AuthType::AUTH_TYPE_UNKNOWN;
+	AuthType user_auth_type = AUTH_TYPE_UNKNOWN;
 	size_t itr = 0;
 
 	//Per https://mariadb.com/kb/en/connection/#handshake-response-packet
@@ -138,7 +138,7 @@ void MariaDB::m_client_protocol_v41(const AuthType srvr_auth_type, const std::ve
 	send_buffer_vec.insert(send_buffer_vec.end(), username_.begin(), username_.end());
 	send_buffer_vec.push_back(0); //NUL terminated
 
-	if (srvr_auth_type == AuthType::AUTH_TYPE_MYSQL_NATIVE && (auth_type_ == AuthType::AUTH_TYPE_MYSQL_NATIVE || auth_type_ == AuthType::AUTH_TYPE_UNKNOWN))
+	if (srvr_auth_type == AUTH_TYPE_MYSQL_NATIVE && (client_auth_type_ == AUTH_TYPE_MYSQL_NATIVE))
 		auth_response = get_mysql_native_password_hash(password_hashed_, srvr_salt);
 	
 	//if (server_capabilities & PLUGIN_AUTH_LENENC_CLIENT_DATA)
@@ -164,7 +164,7 @@ void MariaDB::m_client_protocol_v41(const AuthType srvr_auth_type, const std::ve
 
 	//if (server_capabilities & CLIENT_PLUGIN_AUTH)
 	//string<NUL> authentication plugin name
-	std::vector<uint8_t> auth_plugin_name = gdstring_to_vector<uint8_t>(kAuthTypeServerNames[(size_t)AuthType::AUTH_TYPE_MYSQL_NATIVE]); 
+	std::vector<uint8_t> auth_plugin_name = gdstring_to_vector<uint8_t>(kAuthTypeServerNames[(size_t)AUTH_TYPE_MYSQL_NATIVE]); 
 	send_buffer_vec.insert(send_buffer_vec.end(), auth_plugin_name.begin(), auth_plugin_name.end());
 	send_buffer_vec.push_back(0); //NUL terminated
 
@@ -189,21 +189,18 @@ void MariaDB::m_client_protocol_v41(const AuthType srvr_auth_type, const std::ve
 			authenticated_ = true;
 			return;
 		} else if (srvr_response[itr] == (uint8_t)0xFE) {
-			auth_type = m_get_server_auth_type(m_get_gdstring_from_buf(srvr_response, itr));
+			user_auth_type = m_get_server_auth_type(m_get_gdstring_from_buf(srvr_response, itr));
 		} else if (srvr_response[itr] == 0xFF) {
 			m_handle_server_error(srvr_response, itr);
 			authenticated_ = false;
 			return;
 		} else {
 			std::cout << "unhandled response code:" << std::hex << srvr_response[itr] << std::endl;
-			auth_type = AuthType::AUTH_TYPE_UNKNOWN;
-
+			user_auth_type = AUTH_TYPE_UNKNOWN;
 		}
 	}
 	
-	if (auth_type == AuthType::AUTH_TYPE_MYSQL_NATIVE) {
-
-	} else if (auth_type == AuthType::AUTH_TYPE_ED25519) {
+	if (user_auth_type == AUTH_TYPE_ED25519 && client_auth_type_ == AUTH_TYPE_ED25519) {
 		srvr_auth_msg.assign(srvr_response.begin() + itr + 1, srvr_response.end());
 		auth_response = get_client_ed25519_signature(password_hashed_,srvr_auth_msg);
 		send_buffer_vec = auth_response;
@@ -232,7 +229,6 @@ void MariaDB::m_client_protocol_v41(const AuthType srvr_auth_type, const std::ve
 			std::cout << "unhandled response code:" << std::hex << srvr_response[itr] << std::endl;
 		}
 	}
-
 }
 
 int MariaDB::m_connect(String hostname, int port) {
@@ -261,19 +257,12 @@ int MariaDB::m_connect(String hostname, int port) {
 	return error_;
 } //m_connect
 
-void MariaDB::m_get_console_auth() {
-
-	std::cout << "username:";
-}
-
-
-
 MariaDB::AuthType MariaDB::m_get_server_auth_type(String srvr_auth_name) {
-	AuthType server_auth_type = AuthType::AUTH_TYPE_UNKNOWN;
+	AuthType server_auth_type = AUTH_TYPE_UNKNOWN;
 	if (srvr_auth_name == "mysql_native_password") {
-		server_auth_type = AuthType::AUTH_TYPE_MYSQL_NATIVE;
+		server_auth_type = AUTH_TYPE_MYSQL_NATIVE;
 	} else if (srvr_auth_name == "client_ed25519") {
-		server_auth_type = AuthType::AUTH_TYPE_ED25519;
+		server_auth_type = AUTH_TYPE_ED25519;
 	}
 	//TODO(sigrud) Add cached_sha2 for mysql 
 	return server_auth_type;
@@ -439,7 +428,7 @@ void MariaDB::m_server_init_handshake_v10(const std::vector<uint8_t> src_buffer)
 
 	//determine which auth method the server can use
 	AuthType srvr_auth_type = m_get_server_auth_type((String)v_chr_temp.ptr());
-	if (srvr_auth_type == AuthType::AUTH_TYPE_UNKNOWN) {
+	if (srvr_auth_type == AUTH_TYPE_UNKNOWN) {
 		error_ |= (uint32_t)ErrorCodes::AUTH_PLUGIN_INCOMPATIBLE;
 	}
 
@@ -454,10 +443,10 @@ void MariaDB::m_update_password(String password) {
 	if (is_pre_hashed_) return;
 
 	//take the password and store it as the hash, we only need the hash in the algorithms
-	if (auth_type_ == AuthType::AUTH_TYPE_MYSQL_NATIVE) {
+	if (client_auth_type_ == AUTH_TYPE_MYSQL_NATIVE) {
 		uint8_t *sha1 = password.sha1_buffer().ptrw();
 		password_hashed_.insert(password_hashed_.end(), sha1, sha1 + 20);
-	} else if (auth_type_ == AuthType::AUTH_TYPE_ED25519) {
+	} else if (client_auth_type_ == AUTH_TYPE_ED25519) {
 		uint8_t sha512[64];
 		void *ctx = memalloc(sizeof(mbedtls_sha512_context));
 		mbedtls_sha512_init((mbedtls_sha512_context *)ctx);
@@ -467,13 +456,11 @@ void MariaDB::m_update_password(String password) {
 		mbedtls_sha512_free((mbedtls_sha512_context *)ctx);
 		memfree((mbedtls_sha512_context *)ctx);
 		password_hashed_.insert(password_hashed_.end(), sha512, sha512 + 64);
-
 	}
 
 	//TODO(sigrud) mysql caching_sha2_password
 	//uint8_t *sha256 = password.sha256_buffer().ptrw();
 	//password_.insert(password_.end(), sha256, sha256 + 32);
-
 }
 
 void MariaDB::m_update_username(String username) {
@@ -482,24 +469,44 @@ void MariaDB::m_update_username(String username) {
 
 //public
 int MariaDB::connect_db(String hostname, int port, String dbname, String username, String password) {
-	if (dbname.length() <= 0) return (int)ErrorCodes::DB_EMPTY;
 
-	if (auth_src_ == AuthSrc::AUTH_SRC_UNKNOWN || auth_src_ == AuthSrc::AUTH_SRC_CONSOLE) {
-		if (auth_type_ == AuthType::AUTH_TYPE_UNKNOWN) return (int)ErrorCodes::AUTH_PLUGIN_NOT_SET;
-		//try command line login in a thread
+	if (dbname.length() > 0) {
+		update_dbname(dbname);
+	} else {
+		return (int)ErrorCodes::DB_EMPTY;
+	}
+
+	if (auth_src_ == AUTH_SRC_UNKNOWN || client_auth_type_ == AUTH_TYPE_UNKNOWN) {
+		//assume via script, mysql_native_password and plain password
+		auth_src_ = AUTH_SRC_SCRIPT;
+		client_auth_type_ = AUTH_TYPE_MYSQL_NATIVE;
+		is_pre_hashed_ = false;
+	}
+
+	if (auth_src_ == AUTH_SRC_SCRIPT) {
+		if (username.length() <= 0) return (int)ErrorCodes::USERNAME_EMPTY;
+
+		if (password.length() <= 0) return (int)ErrorCodes::PASSWORD_EMPTY;
+
+		m_update_username(username);
+
+		if (is_pre_hashed_) {
+			password_hashed_ = gd_hexstring_to_vector<uint8_t>(password);
+		} else {
+			m_update_password(password);
+		}
 	}
 
 	if (username_.size() <= 0) return (int)ErrorCodes::USERNAME_EMPTY;
 	if (password_hashed_.size() <= 0) return (int)ErrorCodes::PASSWORD_EMPTY;
-		
-	update_dbname(dbname);
+
 	return m_connect(hostname, port);
 }
 
 void MariaDB::disconnect_db() {
 	if (stream_.is_connected_to_host()) {
 		uint8_t output[6] = { 0x01, 0x00, 0x00, 0x00, 0x01, 0x00 };
-		stream_.put_data(output, 6);
+		stream_.put_data(output, 6); //say goodbye too the server
 		stream_.disconnect_from_host();
 	}
 	connected_ = false;
@@ -664,26 +671,31 @@ void MariaDB::update_dbname(String dbname) {
 
 int MariaDB::set_authtype(AuthSrc auth_src, AuthType auth_type, bool is_pre_hashed) {
 	int err = 0;
-	if (auth_src <= AuthSrc::AUTH_SRC_UNKNOWN || auth_src >= AuthSrc::AUTH_SRC_LAST) {
+	if (auth_src <= AUTH_SRC_UNKNOWN || auth_src >= AUTH_SRC_LAST) {
 		std::cout << "MariaDB authentication source not set!" << std::endl;
 		return (int)ErrorCodes::AUTH_PLUGIN_NOT_SET;
 	}
 
-	if (auth_type <= AuthType::AUTH_TYPE_UNKNOWN || auth_type >= AuthType::AUTH_TYPE_LAST) {
+	if (auth_type <= AUTH_TYPE_UNKNOWN || auth_type >= AUTH_TYPE_LAST) {
 		std::cout << "MariaDB authentication type not set!" << std::endl;
 		return (int)ErrorCodes::AUTH_PLUGIN_NOT_SET;
 	}
 
 	auth_src_ = auth_src;
-	auth_type_ = auth_type;
+	client_auth_type_ = auth_type;
 	is_pre_hashed_ = is_pre_hashed;
-	if (auth_src == AuthSrc::AUTH_SRC_CONSOLE) {
+	if (auth_src == AUTH_SRC_CONSOLE) {
+		is_pre_hashed_ = false;
 		std::cout << "MariaDB Console Authentication Enabled" << std::endl;
 		std::cout << "Username:";
 		String username = get_gdstring_from_console(true, 10000);
+
 		std::cout << "Password:";
 		String password = get_gdstring_from_console(false, 10000);
 		std::cout << std::endl;
+
+		m_update_username(username);
+		m_update_password(password);
 	}
 
 	return err;

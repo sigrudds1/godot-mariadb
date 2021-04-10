@@ -69,7 +69,7 @@ public:
 	};
 
 private:
-	enum class ErrorCodes {
+	enum class ErrorCodes : uint32_t {
 		NO_ERROR = 0,
 		SERVER_PROTOCOL_INCOMPATIBLE = (1UL << 0),
 		CLIENT_PROTOCOL_INCOMPATIBLE = (1UL << 1),
@@ -81,7 +81,7 @@ private:
 		DB_EMPTY = (1UL << 7),
 	};
 
-	enum class Capabilities {
+	enum class Capabilities : uint32_t {
 		LONG_PASSWORD = (1UL << 0), //MySQL
 		MYSQL = (1UL << 0), //MariaDB - lets server know this is a mysql client
 		FOUND_ROWS = (1UL << 1),
@@ -136,8 +136,8 @@ private:
 
 	const std::vector<String> kAuthTypeServerNames = { "unknown", "mysql_native_password", "client_ed25519" }; 
 
-	AuthSrc auth_src_ = AuthSrc::AUTH_SRC_UNKNOWN;
-	AuthType auth_type_ = AuthType::AUTH_TYPE_UNKNOWN;
+	AuthSrc auth_src_ = AUTH_SRC_UNKNOWN;
+	AuthType client_auth_type_ = AUTH_TYPE_UNKNOWN;
 	bool is_pre_hashed_ = false;
 	bool authenticated_ = false;
 	uint32_t client_capabilities_ = 0;
@@ -166,8 +166,6 @@ private:
 	void m_add_packet_header(std::vector<uint8_t> &stream, int sequence);
 	void m_client_protocol_v41(const AuthType srvr_auth_type, const std::vector<uint8_t> srvr_salt);
 	int m_connect(String hostname, int port);
-
-	void m_get_console_auth();
 
 	String m_get_gdstring_from_buf(std::vector<uint8_t> buf, size_t &start_pos);
 

@@ -183,9 +183,10 @@ String get_gdstring_from_console(bool echo_input, uint64_t timeout_ms) {
 			char chr = 0;
 			while (chr != '\n' && chr != '\r') {
 				std::cin.get(chr);
-				return_str += chr;
+				if (chr != '\n' && chr != '\r') return_str += chr;
 				start_time = OS::get_singleton()->get_system_time_msecs();
 			}
+			std::cin.clear();
 			done = true;
 		}
 		if (timeout_ms > 0) {
