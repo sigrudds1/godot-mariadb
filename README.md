@@ -17,7 +17,7 @@ I will have a tutorial up on how to compile and use this module on https://vikin
 var db = MariaDB.new()  
 
 **Set authorization source and type**  
-var auth_ok = db.set_auth_type(MariaDB::AuthSrc, MariaDB::AuthType, bool is_pre_hashed). returns int, 0 on success or error code  
+var auth_ok = db.set_authtype(MariaDB::AuthSrc, MariaDB::AuthType, bool is_pre_hashed). returns int, 0 on success or error code  
 **If this method is not used before connect_db(), the password provided will be assumed in plain text and authorization method will be mysql_native_password.**  
 
 #### AuthSrc enums  
