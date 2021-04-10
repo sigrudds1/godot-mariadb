@@ -66,7 +66,7 @@ std::vector<T> gdstring_to_vector(String string) {
 template <typename T>
 std::vector<T> gd_hexstring_to_vector(const String &hex) {
 	std::vector<T> bytes;
-	for (unsigned int i = 0; i < hex.length(); i += 2) {
+	for (size_t i = 0; i < (size_t)hex.length(); i += 2) {
 		String byteString = hex.substr(i, 2);
 		T byte = (T)strtol(byteString.utf8().ptrw(), NULL, 16);
 		bytes.push_back(byte);
