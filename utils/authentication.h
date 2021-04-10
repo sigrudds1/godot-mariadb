@@ -1,6 +1,7 @@
 #ifndef AUTHENTICATION_H
 #define AUTHENTICATION_H
 
+#include <stdint.h>
 #include <vector>
 
 std::vector<uint8_t> get_caching_sha2_password_hash(std::vector<uint8_t> sha256_hashed_once_password, std::vector<uint8_t> srvr_salt);

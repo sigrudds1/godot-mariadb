@@ -35,6 +35,7 @@
 #define AUTH_ED25519_H
 
 #include <stdint.h>
+#include <stddef.h>
 
 //REF https://security.stackexchange.com/questions/218046/how-does-mariadbs-ed25519-auth-scheme-work
 

@@ -69,7 +69,7 @@ public:
 	};
 
 private:
-	enum class ErrorCodes : uint32_t {
+	enum class ErrorCodes {
 		NO_ERROR = 0,
 		SERVER_PROTOCOL_INCOMPATIBLE = (1UL << 0),
 		CLIENT_PROTOCOL_INCOMPATIBLE = (1UL << 1),
@@ -81,8 +81,8 @@ private:
 		DB_EMPTY = (1UL << 7),
 	};
 
-	enum class Capabilities : uint32_t {
-		LONG_PASSWORD = (unsigned __int64)(1UL << 0), //MySQL
+	enum class Capabilities {
+		LONG_PASSWORD = (1UL << 0), //MySQL
 		MYSQL = (1UL << 0), //MariaDB - lets server know this is a mysql client
 		FOUND_ROWS = (1UL << 1),
 		LONG_FLAG = (1UL << 2), //not used in MariaDB
