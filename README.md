@@ -3,7 +3,11 @@ A MariaDB module for the Godot Engine, currently 3.3.0 rc7 but should also work 
 
 This module has a self contained connector and does not use the GPL connectors from Maria/MySQL and will compile on Windows and Linux, possiblly Mac.  
 
-Copy to Godot/modules and run scons, see https://docs.godotengine.org/en/stable/development/compiling/index.html.
+Copy to "the-godot-folder"/modules/mariadb/ and run scons, see https://docs.godotengine.org/en/stable/development/compiling/index.html.
+
+-or run-
+
+git clone https://github.com/sigrudds1/godot-mariadb.git "the-godot-folder"/modules/mariadb 
 
 I will have a tutorial up on how to compile and use this module on https://vikingtinkerer.com, once it is stable.  
 
