@@ -165,7 +165,7 @@ private:
 	 */
 	void m_add_packet_header(std::vector<uint8_t> &stream, int sequence);
 	void m_client_protocol_v41(const AuthType srvr_auth_type, const std::vector<uint8_t> srvr_salt);
-	int m_connect(String hostname, int port);
+	int m_connect(IP_Address ip, int port);
 
 	String m_get_gdstring_from_buf(std::vector<uint8_t> buf, size_t &start_pos);
 

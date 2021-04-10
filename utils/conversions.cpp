@@ -31,3 +31,14 @@
 
 #include "conversions.h"
 
+#include <core/io/ip.h>
+
+IP_Address resolve_host(String hostname) {
+	IP_Address ip;
+	if (hostname.is_valid_ip_address()) {
+		ip = hostname;
+	} else {
+		ip = IP::get_singleton()->resolve_hostname(hostname);
+	}
+	return ip;
+}

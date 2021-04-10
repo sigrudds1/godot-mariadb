@@ -231,9 +231,9 @@ void MariaDB::m_client_protocol_v41(const AuthType srvr_auth_type, const std::ve
 	}
 }
 
-int MariaDB::m_connect(String hostname, int port) {
+int MariaDB::m_connect(IP_Address ip, int port) {
 	error_ = 0;
-	stream_.connect_to_host(hostname, port);
+	stream_.connect_to_host(ip, port);
 	connected_ = stream_.is_connected_to_host();
 
 	std::vector<uint8_t> recv_buffer = m_recv_data(250);
@@ -440,6 +440,8 @@ void MariaDB::m_server_init_handshake_v10(const std::vector<uint8_t> src_buffer)
 	return;
 } //server_init_handshake_v10
 
+
+
 void MariaDB::m_update_password(String password) {
 	if (is_pre_hashed_) return;
 
@@ -470,6 +472,7 @@ void MariaDB::m_update_username(String username) {
 
 //public
 int MariaDB::connect_db(String hostname, int port, String dbname, String username, String password) {
+	IP_Address ip = resolve_host(hostname);
 
 	if (dbname.length() > 0) {
 		update_dbname(dbname);
@@ -501,7 +504,7 @@ int MariaDB::connect_db(String hostname, int port, String dbname, String usernam
 	if (username_.size() <= 0) return (int)ErrorCodes::USERNAME_EMPTY;
 	if (password_hashed_.size() <= 0) return (int)ErrorCodes::PASSWORD_EMPTY;
 
-	return m_connect(hostname, port);
+	return m_connect(ip, port);
 }
 
 void MariaDB::disconnect_db() {
