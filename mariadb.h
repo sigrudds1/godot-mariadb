@@ -48,7 +48,7 @@
 
 constexpr int kPacketMaxSize = 0xffffff;
 constexpr uint8_t kCharacterCollationId = 33; //utf8_general_ci
-constexpr char *kCharacterCollationName = "utf8_general_ci";
+constexpr char *kCharacterCollationName = (char *)"utf8_general_ci";
 
 class MariaDB : public Reference {
 	GDCLASS(MariaDB, Reference);

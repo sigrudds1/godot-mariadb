@@ -241,10 +241,10 @@ int MariaDB::m_connect(String hostname, int port) {
 	//per https://mariadb.com/kb/en/connection/
 	//The first packet from the server on a connection is a greeting giving/suggesting the requirements to login
 	//first 3 bytes are packet length byte[0] + (byte[1]<<8) + (byte[2]<<16)
-	uint32_t packet_length = 0;
-	packet_length =  (uint32_t)recv_buffer[0] + ((uint32_t)recv_buffer[1] << 8) + ((uint32_t)recv_buffer[2] << 16);
+	//uint32_t packet_length = 0;
+	//packet_length =  (uint32_t)recv_buffer[0] + ((uint32_t)recv_buffer[1] << 8) + ((uint32_t)recv_buffer[2] << 16);
 	//4th byte is sequence number, increment this when replying with login request, if client starts then start at 0
-	uint8_t sequence_number = recv_buffer[3];
+	//uint8_t sequence_number = recv_buffer[3];
 
 	//if (packet_length == byte_cnt - 4 && sequence_number != 0) continue;
 
@@ -357,7 +357,6 @@ std::string MariaDB::m_get_packet_string(const std::vector<uint8_t> src_buf, siz
 }
 
 void MariaDB::m_server_init_handshake_v10(const std::vector<uint8_t> src_buffer) {
-	uint32_t connection_id = {};
 	uint16_t status = 0;
 
 	std::vector<uint8_t> server_salt;
@@ -372,7 +371,8 @@ void MariaDB::m_server_init_handshake_v10(const std::vector<uint8_t> src_buffer)
 	server_version_ = v_chr_temp.ptr();
 
 	//4bytes - from server version string nul +1, doesn't appear to be needed.
-	connection_id = bytes_to_num<uint32_t>(src_buffer.data(), 4, itr);
+	//uint32_t connection_id = bytes_to_num<uint32_t>(src_buffer.data(), 4, itr);
+	bytes_to_num<uint32_t>(src_buffer.data(), 4, itr);
 
 	//salt part 1
 	for (size_t j = 0; j < 8; j++)
@@ -387,7 +387,8 @@ void MariaDB::m_server_init_handshake_v10(const std::vector<uint8_t> src_buffer)
 	server_capabilities_ += ((uint32_t)src_buffer[++itr]) << 8;
 	
 	//1byte - server default collation code
-	uint8_t collation_code = src_buffer[++itr];
+	//uint8_t collation_code = src_buffer[++itr];
+	++itr;
 
 	//2bytes - Status flags
 	status = (uint16_t)src_buffer[++itr];
@@ -412,7 +413,7 @@ void MariaDB::m_server_init_handshake_v10(const std::vector<uint8_t> src_buffer)
 	//4bytes - filler or server capabilities part 3 (mariadb v10.2 or later) "MariaDB extended capablities"
 	itr += 4;
 	//12bytes - salt part 2
-	for (size_t j = 0; j < std::max(13, server_salt_length - 8); j++)
+	for (size_t j = 0; j < (size_t)std::max(13, server_salt_length - 8); j++)
 		server_salt.push_back(src_buffer[++itr]);
 
 	server_salt.pop_back(); //remove the last element 
@@ -522,9 +523,7 @@ Variant MariaDB::query(String sql_stmt) {
 	std::vector<uint8_t> temp = gdstring_to_vector<uint8_t>(sql_stmt);
 
 	size_t pkt_itr = 0;
-	size_t pkt_len = 0; //techinically section length everything arrives in one stream packet
-	uint8_t seq_num = 0;
-	uint64_t col_cnt = 0;
+	size_t pkt_len; //techinically section length everything arrives in one stream packet
 	size_t len_encode = 0;
 	bool done = false;
 	bool dep_eof = (client_capabilities_ & (uint32_t)Capabilities::DEPRECATE_EOF);
@@ -539,12 +538,13 @@ Variant MariaDB::query(String sql_stmt) {
 	srvr_response = m_recv_data(1000);
 
 	pkt_len = m_get_packet_length(srvr_response, pkt_itr);
-	seq_num = srvr_response[++pkt_itr];
+	//uint8_t seq_num = srvr_response[++pkt_itr];
+	++pkt_itr;
 
 	//https://mariadb.com/kb/en/result-set-packets/
 	//	Resultset metadata
 	//	1 Column count packet
-	col_cnt = srvr_response[++pkt_itr];
+	uint64_t col_cnt = srvr_response[++pkt_itr];
 	if (col_cnt == 0xFF) {
 		int err = srvr_response[pkt_itr + 1] + (srvr_response[pkt_itr + 2] << 8);
 		m_handle_server_error(srvr_response, pkt_itr);
@@ -563,7 +563,8 @@ Variant MariaDB::query(String sql_stmt) {
 	//	for each column (i.e column_count times)
 	for (size_t itr = 0; itr < col_cnt; ++itr) {
 		pkt_len = m_get_packet_length(srvr_response, ++pkt_itr);
-		seq_num = srvr_response[++pkt_itr];
+		//seq_num = srvr_response[++pkt_itr];
+		++pkt_itr;
 
 		//		Column Definition packet
 
@@ -631,7 +632,8 @@ Variant MariaDB::query(String sql_stmt) {
 
 	while (!done && pkt_itr < srvr_response.size()) {
 		pkt_len = m_get_packet_length(srvr_response, ++pkt_itr);
-		seq_num = srvr_response[++pkt_itr];
+		//seq_num = srvr_response[++pkt_itr];
+		++pkt_itr;
 		len_encode = srvr_response[++pkt_itr];
 
 		if (len_encode == 0xFF) {
