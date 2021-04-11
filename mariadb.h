@@ -79,14 +79,18 @@ public:
 private:
 	enum class ErrorCodes : uint32_t {
 		NO_ERROR = 0,
-		SERVER_PROTOCOL_INCOMPATIBLE = (1UL << 0),
-		CLIENT_PROTOCOL_INCOMPATIBLE = (1UL << 1),
-		AUTH_PLUGIN_NOT_SET = (1UL << 2),
-		AUTH_PLUGIN_INCOMPATIBLE = (1UL << 3),
-		AUTH_FAILED = (1UL << 4),
-		USERNAME_EMPTY = (1UL << 5),
-		PASSWORD_EMPTY = (1UL << 6),
-		DB_EMPTY = (1UL << 7),
+		NO_RESPONSE,
+		NOT_CONNECTED,
+		PACKET_LENGTH_MISMATCH,
+		PACKET_SEQUENCE_ERROR,
+		SERVER_PROTOCOL_INCOMPATIBLE,
+		CLIENT_PROTOCOL_INCOMPATIBLE,
+		AUTH_PLUGIN_NOT_SET,
+		AUTH_PLUGIN_INCOMPATIBLE,
+		AUTH_FAILED,
+		USERNAME_EMPTY,
+		PASSWORD_EMPTY,
+		DB_EMPTY,
 	};
 
 	enum class Capabilities : uint32_t {
@@ -174,7 +178,7 @@ private:
 	 */
 	void m_add_packet_header(std::vector<uint8_t> &stream, int sequence);
 	void m_client_protocol_v41(const AuthType srvr_auth_type, const std::vector<uint8_t> srvr_salt);
-	int m_connect(IP_Address ip, int port);
+	void m_connect(IP_Address ip, int port);
 
 	String m_get_gdstring_from_buf(std::vector<uint8_t> buf, size_t &start_pos);
 
@@ -198,7 +202,7 @@ private:
 	 * \param byte_cnt	size_t byte count to be copied from the packet buffer.
 	 * \return			std::string.
 	 */
-	std::string m_get_packet_string(const std::vector<uint8_t> src_buf, size_t &last_pos, size_t byte_cnt);
+	std::string m_get_packet_string(const std::vector<uint8_t> &src_buf, size_t &last_pos, size_t byte_cnt);
 
 	AuthType m_get_server_auth_type(String srvr_auth_name);
 
@@ -206,7 +210,7 @@ private:
 	//TODO(sigrud) Add error log file using the username in the filename
 	void m_print_error(std::string error);
 	void m_handle_server_error(const std::vector<uint8_t> src_buffer, size_t &last_pos);
-	void m_server_init_handshake_v10(const std::vector<uint8_t> src_buffer);
+	void m_server_init_handshake_v10(const std::vector<uint8_t> &src_buffer);
 	void m_update_password(String password);
 	void m_update_username(String username);
 
@@ -214,7 +218,7 @@ protected:
 	static void _bind_methods();
 
 public:
-	int connect_db(String hostname, int port, String dbname, String username = "", String password = "");
+	uint32_t connect_db(String hostname, int port, String dbname, String username = "", String password = "");
 	void disconnect_db();
 
 	//int execute(String command);
@@ -240,9 +244,9 @@ public:
 	 * \param auth_src		enum AuthSrc determines where the authentication parameters are requested..
 	 * \param auth_type		enum AuthType determines what authoriztion type will be statically used.
 	 * \param is_pre_hash	bool if set the password used will be hashed by the required type before used.
-	 * \return 				int 0 = no error, see error enum class ErrorCode
+	 * \return 				uint32_t 0 = no error, see error enum class ErrorCode
 	 */
-	int set_authtype(AuthSrc auth_src, AuthType auth_type, bool is_pre_hashed = true);
+	uint32_t set_authtype(AuthSrc auth_src, AuthType auth_type, bool is_pre_hashed = true);
 
 	void set_ip_type(IpType type);
 

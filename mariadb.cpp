@@ -235,30 +235,38 @@ void MariaDB::m_client_protocol_v41(const AuthType srvr_auth_type, const std::ve
 	}
 }
 
-int MariaDB::m_connect(IP_Address ip, int port) {
+void MariaDB::m_connect(IP_Address ip, int port) {
 	error_ = 0;
 	stream_.connect_to_host(ip, port);
 	connected_ = stream_.is_connected_to_host();
 
 	std::vector<uint8_t> recv_buffer = m_recv_data(250);
+	if (recv_buffer.size() <= 4 ){
+		error_ = (uint32_t)ErrorCodes::NO_RESPONSE;
+		return;
+	}
 
 	//per https://mariadb.com/kb/en/connection/
 	//The first packet from the server on a connection is a greeting giving/suggesting the requirements to login
 	//first 3 bytes are packet length byte[0] + (byte[1]<<8) + (byte[2]<<16)
-	//uint32_t packet_length = 0;
-	//packet_length =  (uint32_t)recv_buffer[0] + ((uint32_t)recv_buffer[1] << 8) + ((uint32_t)recv_buffer[2] << 16);
+	uint32_t packet_length =  (uint32_t)recv_buffer[0] + ((uint32_t)recv_buffer[1] << 8) + ((uint32_t)recv_buffer[2] << 16);
+	//On initial connect the packet length shoudl be 4 byte less than buffer length
+	if (packet_length != (recv_buffer.size() - 4)){
+		error_ = (uint32_t)ErrorCodes::PACKET_LENGTH_MISMATCH;
+		return;
+	}
 	//4th byte is sequence number, increment this when replying with login request, if client starts then start at 0
-	//uint8_t sequence_number = recv_buffer[3];
-
-	//if (packet_length == byte_cnt - 4 && sequence_number != 0) continue;
+	if (recv_buffer[3] != 0){
+		error_ = (uint32_t)ErrorCodes::PACKET_SEQUENCE_ERROR;
+		return;
+	} 
 
 	//5th byte is protocol version, currently only 10 for MariaDB and MySQL v3.21.0+, protocol version 9 for older MySQL versions.
 	if (recv_buffer[4] == 10) {
 		m_server_init_handshake_v10(recv_buffer);
 	} else {
-		error_ |= (size_t)ErrorCodes::SERVER_PROTOCOL_INCOMPATIBLE;
+		error_ = (uint32_t)ErrorCodes::SERVER_PROTOCOL_INCOMPATIBLE;
 	}
-	return error_;
 } //m_connect
 
 MariaDB::AuthType MariaDB::m_get_server_auth_type(String srvr_auth_name) {
@@ -352,7 +360,7 @@ std::vector<uint8_t> MariaDB::m_get_password_hash(const AuthType authtype) {
 	return password_hash;
 }
 
-std::string MariaDB::m_get_packet_string(const std::vector<uint8_t> src_buf, size_t &last_pos, size_t byte_cnt) {
+std::string MariaDB::m_get_packet_string(const std::vector<uint8_t> &src_buf, size_t &last_pos, size_t byte_cnt) {
 	std::string result;
 	for (size_t itr = 0; itr < byte_cnt; ++itr)
 		result += src_buf[++last_pos];
@@ -360,7 +368,7 @@ std::string MariaDB::m_get_packet_string(const std::vector<uint8_t> src_buf, siz
 	return result;
 }
 
-void MariaDB::m_server_init_handshake_v10(const std::vector<uint8_t> src_buffer) {
+void MariaDB::m_server_init_handshake_v10(const std::vector<uint8_t> &src_buffer) {
 	uint16_t status = 0;
 
 	std::vector<uint8_t> server_salt;
@@ -402,9 +410,15 @@ void MariaDB::m_server_init_handshake_v10(const std::vector<uint8_t> src_buffer)
 	server_capabilities_ += ((uint32_t)src_buffer[++itr]) << 16;
 	server_capabilities_ += ((uint32_t)src_buffer[++itr]) << 24;
 
-	error_ |= (server_capabilities_ & (uint32_t)Capabilities::PROTOCOL_41) ? 0 : (uint32_t)ErrorCodes::CLIENT_PROTOCOL_INCOMPATIBLE;
+	if (!(server_capabilities_ & (uint32_t)Capabilities::PROTOCOL_41)){
+		error_ = (uint32_t)ErrorCodes::CLIENT_PROTOCOL_INCOMPATIBLE;
+		return;
+	}
 	//TODO(sigrud) Make auth plugin not required if using ssl/tls
-	error_ |= (server_capabilities_ & (uint32_t)Capabilities::PLUGIN_AUTH) ? 0 : (uint32_t)ErrorCodes::AUTH_PLUGIN_NOT_SET;
+	if (!(server_capabilities_ & (uint32_t)Capabilities::PLUGIN_AUTH)){
+		error_ = (uint32_t)ErrorCodes::AUTH_PLUGIN_NOT_SET;
+		return;
+	}
 
 	//1byte - salt length 0 for none
 	uint8_t server_salt_length = src_buffer[++itr];
@@ -434,12 +448,11 @@ void MariaDB::m_server_init_handshake_v10(const std::vector<uint8_t> src_buffer)
 	//determine which auth method the server can use
 	AuthType srvr_auth_type = m_get_server_auth_type((String)v_chr_temp.ptr());
 	if (srvr_auth_type == AUTH_TYPE_UNKNOWN) {
-		error_ |= (uint32_t)ErrorCodes::AUTH_PLUGIN_INCOMPATIBLE;
+		error_ = (uint32_t)ErrorCodes::AUTH_PLUGIN_INCOMPATIBLE;
+		return;
 	}
 
-	//if not protocol 41 or auth plugin mysql_native_password then exit
-	if (error_ == 0) 
-		m_client_protocol_v41(srvr_auth_type, server_salt);
+	m_client_protocol_v41(srvr_auth_type, server_salt);
 
 	return;
 } //server_init_handshake_v10
@@ -475,12 +488,11 @@ void MariaDB::m_update_username(String username) {
 }
 
 //public
-int MariaDB::connect_db(String hostname, int port, String dbname, String username, String password) {
+uint32_t MariaDB::connect_db(String hostname, int port, String dbname, String username, String password) {
+	if (connected_) disconnect_db();
+
 	IP_Address ip = resolve_host(hostname, (IP::Type)ip_type_);
-	std::cout << (ip.is_ipv4() ? "ipv4" : "ipv6") << std::endl;
-	uint8_t *ip_6 = const_cast<uint8_t *>(ip.get_ipv6());
-	std::cout << "len:";
-	print_arr_hex(ip_6, 16, true);
+	//std::cout << (ip.is_ipv4() ? "ipv4" : "ipv6") << std::endl;
 
 	if (dbname.length() > 0) {
 		update_dbname(dbname);
@@ -512,7 +524,8 @@ int MariaDB::connect_db(String hostname, int port, String dbname, String usernam
 	if (username_.size() <= 0) return (int)ErrorCodes::USERNAME_EMPTY;
 	if (password_hashed_.size() <= 0) return (int)ErrorCodes::PASSWORD_EMPTY;
 
-	return m_connect(ip, port);
+	m_connect(ip, port);
+	return error_;
 }
 
 void MariaDB::disconnect_db() {
@@ -526,8 +539,9 @@ void MariaDB::disconnect_db() {
 }
 
 Variant MariaDB::query(String sql_stmt) {
-
-	if (!authenticated_) return 1045;
+	connected_ = stream_.is_connected_to_host();
+	if (!connected_) return (uint32_t)ErrorCodes::NOT_CONNECTED;
+	if (!authenticated_) return (uint32_t)ErrorCodes::AUTH_FAILED;
 
 	std::vector<uint8_t> send_buffer_vec;
 	std::vector<uint8_t> srvr_response;
@@ -682,16 +696,15 @@ void MariaDB::update_dbname(String dbname) {
 	//TODO(sigrud) If db is not the same and connected then change db on server
 }
 
-int MariaDB::set_authtype(AuthSrc auth_src, AuthType auth_type, bool is_pre_hashed) {
-	int err = 0;
+uint32_t MariaDB::set_authtype(AuthSrc auth_src, AuthType auth_type, bool is_pre_hashed) {
 	if (auth_src <= AUTH_SRC_UNKNOWN || auth_src >= AUTH_SRC_LAST) {
 		std::cout << "MariaDB authentication source not set!" << std::endl;
-		return (int)ErrorCodes::AUTH_PLUGIN_NOT_SET;
+		return (uint32_t)ErrorCodes::AUTH_PLUGIN_NOT_SET;
 	}
 
 	if (auth_type <= AUTH_TYPE_UNKNOWN || auth_type >= AUTH_TYPE_LAST) {
 		std::cout << "MariaDB authentication type not set!" << std::endl;
-		return (int)ErrorCodes::AUTH_PLUGIN_NOT_SET;
+		return (uint32_t)ErrorCodes::AUTH_PLUGIN_NOT_SET;
 	}
 
 	auth_src_ = auth_src;
@@ -711,7 +724,7 @@ int MariaDB::set_authtype(AuthSrc auth_src, AuthType auth_type, bool is_pre_hash
 		m_update_password(password);
 	}
 
-	return err;
+	return (uint32_t)ErrorCodes::NO_ERROR;
 }
 
 void MariaDB::set_ip_type(IpType type) {
