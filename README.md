@@ -20,12 +20,12 @@ var db = MariaDB.new()
 var auth_ok = db.set_authtype(MariaDB::AuthSrc, MariaDB::AuthType, bool is_pre_hashed). returns int, 0 on success or error code  
 **If this method is not used before connect_db(), the password provided will be assumed in plain text and authorization method will be mysql_native_password.**  
 
-#### AuthSrc enums  
+#### AuthSrc enum  
 Set with MariaDB.AUTH_SRC_...
 1. AUTH_SRC_SCRIPT - Uses the username and password parameters in connect_db().
 2. AUTH_SRC_CONSOLE - Prompts in the console for username and password in plain text only, password is not echoed.  
 
-#### AuthType enums  
+#### AuthType enum  
 Set with MariaDB.AUTH_TYPE_...
 1. AUTH_TYPE_MYSQL_NATIVE - Uses the mysql_native_password login method, this method is default when creating a user in Maria/MySQL, **pre-hash is sha1**.
 2. AUTH_TYPE_ED25519 - Uses the, MariaDB only, client_ed25519 authtication plugin, see MariaDb documentation for changing/setting users, **pre-hash is sha512**.
@@ -34,7 +34,17 @@ Set with MariaDB.AUTH_TYPE_...
 If set, the password entered in the connect_db() password parameter should be pre-hashed; use the hashing protocol in enum AuthType description for which type to store. This is particularly useful in autostarting daemons so the password does not need to be stored in plain text, obviously ed25519 sha512 is a more secure method of storing a password. Just keep in mind that anyone who gains access to this stored method, either directly in gdscipt or a file, could still use it to access your DB they just won't know the plain password; limit what the DB user can do or access to minimized and damages that may occur if it was obtained for nefarious purposes. Console password input is the safest of the choices available but not good or easy for autostart.  
 
 **Connect to the database**  
-var connect_ok = connect_db(String hostname, int port, String db_name, String username, String password). returns int, 0 on success or error code  
+var connect_ok = db.connect_db(String hostname, int port, String db_name, String username, String password). returns int, 0 on success or error code. If AuthSrc::AUTH_SRC_CONSOLE is set then username and password will be ignored and prompted in the console window, you can safely use "" for both parameters in this case.  
 
 **Send query or command**  
-var qry = query(String sql_stmt) returns Variant, if select statement success return an Array of Dictionaries can be zero length array, other will return int 0 on success or error code.   
+var qry = db.query(String sql_stmt) returns Variant, if select statement success return an Array of Dictionaries can be zero length array, other will return int 0 on success or error code.  
+
+**Set IP type**
+There is an issue with some Linux distos and IPv6 causing Godot to crash on hostname to IP conversion, if godot crashes and the stack trace mentions m_connect_db near the top, this is likely the issue; try setting the IP type to IPv4.  
+db.set_ip_type(MariaDB::IpType type) sets the IP type.
+
+#### IpType enum
+Set with MariaDB.IP_TYPE_...
+1. IP_TYPE_IPV4
+2. IP_TYPE_IPV6
+3. IP_TYPE_ANY

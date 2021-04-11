@@ -34,13 +34,14 @@
 
 #include <core/ustring.h>
 #include <core/io/ip_address.h>
+#include <core/io/ip.h>
 
 #include <cassert>
 #include <cstdint>
 #include <vector>
 #include <cstdlib>
 
-IP_Address resolve_host(String hostname);
+IP_Address resolve_host(String hostname, IP::Type type);
 
 template <typename T>
 T bytes_to_num(const uint8_t *src, const size_t byte_count, size_t &start_pos) {

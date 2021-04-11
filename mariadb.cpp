@@ -58,9 +58,13 @@ MariaDB::~MariaDB() {
 void MariaDB::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("connect_db", "hostname", "port", "database", "username", "password"), &MariaDB::connect_db);
 	ClassDB::bind_method(D_METHOD("disconnect_db"), &MariaDB::disconnect_db);
+	ClassDB::bind_method(D_METHOD("set_ip_type", "type"), &MariaDB::set_ip_type);
 	ClassDB::bind_method(D_METHOD("set_authtype", "auth_src", "auth_type", "is_pre_hashed"), &MariaDB::set_authtype);
 	ClassDB::bind_method(D_METHOD("query", "qry_stmt"), &MariaDB::query);
 
+	BIND_ENUM_CONSTANT(IP_TYPE_IPV4);
+	BIND_ENUM_CONSTANT(IP_TYPE_IPV6);
+	BIND_ENUM_CONSTANT(IP_TYPE_ANY);
 	BIND_ENUM_CONSTANT(AUTH_SRC_CONSOLE);
 	BIND_ENUM_CONSTANT(AUTH_SRC_SCRIPT);
 	BIND_ENUM_CONSTANT(AUTH_TYPE_MYSQL_NATIVE);
@@ -472,7 +476,11 @@ void MariaDB::m_update_username(String username) {
 
 //public
 int MariaDB::connect_db(String hostname, int port, String dbname, String username, String password) {
-	IP_Address ip = resolve_host(hostname);
+	IP_Address ip = resolve_host(hostname, (IP::Type)ip_type_);
+	std::cout << (ip.is_ipv4() ? "ipv4" : "ipv6") << std::endl;
+	uint8_t *ip_6 = const_cast<uint8_t *>(ip.get_ipv6());
+	std::cout << "len:";
+	print_arr_hex(ip_6, 16, true);
 
 	if (dbname.length() > 0) {
 		update_dbname(dbname);
@@ -705,3 +713,8 @@ int MariaDB::set_authtype(AuthSrc auth_src, AuthType auth_type, bool is_pre_hash
 
 	return err;
 }
+
+void MariaDB::set_ip_type(IpType type) {
+	ip_type_ = type;
+}
+

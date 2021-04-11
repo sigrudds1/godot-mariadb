@@ -43,6 +43,8 @@
 
 #include <core/reference.h>
 #include <core/io/stream_peer_tcp.h>
+#include <core/io/ip_address.h>
+#include <core/io/ip.h>
 #include <core/os/thread.h>
 #include <core/ustring.h>
 
@@ -66,6 +68,12 @@ public:
 		AUTH_TYPE_MYSQL_NATIVE,
 		AUTH_TYPE_ED25519,
 		AUTH_TYPE_LAST,
+	};
+
+	enum IpType {
+		IP_TYPE_IPV4 = IP::TYPE_IPV4,
+		IP_TYPE_IPV6 = IP::TYPE_IPV6,
+		IP_TYPE_ANY = IP::TYPE_ANY,
 	};
 
 private:
@@ -136,6 +144,7 @@ private:
 
 	const std::vector<String> kAuthTypeServerNames = { "unknown", "mysql_native_password", "client_ed25519" }; 
 
+	IpType ip_type_ = IpType::IP_TYPE_ANY;
 	AuthSrc auth_src_ = AUTH_SRC_UNKNOWN;
 	AuthType client_auth_type_ = AUTH_TYPE_UNKNOWN;
 	bool is_pre_hashed_ = false;
@@ -235,6 +244,8 @@ public:
 	 */
 	int set_authtype(AuthSrc auth_src, AuthType auth_type, bool is_pre_hashed = true);
 
+	void set_ip_type(IpType type);
+
 	//TODO(sigrud) Async Callbacks
 
 	MariaDB();
@@ -243,5 +254,6 @@ public:
 
 VARIANT_ENUM_CAST(MariaDB::AuthSrc);
 VARIANT_ENUM_CAST(MariaDB::AuthType);
+VARIANT_ENUM_CAST(MariaDB::IpType);
 
 #endif
