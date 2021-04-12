@@ -40,7 +40,7 @@ var connect_ok = db.connect_db(String hostname, int port, String db_name, String
 var qry = db.query(String sql_stmt) returns Variant, if select statement success return an Array of Dictionaries can be zero length array, other will return int 0 on success or error code.  
 
 **Set IP type**
-There are known issues with MariaDB and IPv6 where it doesn't respond to a connection attempt. If connecting via localhost the default can be IPv6, you can either connect with 127.0.0.1 or change the IP type to IPv4 if your having problems, some have set the db user host as ::1 (IPv6 loopback) instead of localhost and it works fine.
+There are known issues with MariaDB and IPv6 where it doesn't respond to a IPv6 connection attempt. If connecting via localhost the Godot packet_peer_tcp default can be IPv6 for name resolution, you can either connect with 127.0.0.1 or change the IP type to IPv4 if your having problems, some have set the db user host as ::1 (IPv6 loopback) instead of localhost and it works fine.
 db.set_ip_type(MariaDB::IpType type) sets the IP type.
 
 #### IpType enum
