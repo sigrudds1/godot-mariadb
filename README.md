@@ -1,7 +1,7 @@
 # godot-mariadb
 A MariaDB module for the Godot Engine, currently 3.3.0 rc7 but should also work on 4.0.0.  
 
-This module has a self contained connector and does not use the GPL connectors from Maria/MySQL and will compile on Windows and Linux, possiblly Mac.  
+This module has a self contained connector and does not use the GPL connectors from Maria/MySQL and will compile on Windows, Linux, probably Mac.  
 
 Copy to "the-godot-folder"/modules/mariadb/ and run scons, see https://docs.godotengine.org/en/stable/development/compiling/index.html.
 
@@ -37,10 +37,11 @@ If set, the password entered in the connect_db() password parameter should be pr
 var connect_ok = db.connect_db(String hostname, int port, String db_name, String username, String password). returns int, 0 on success or error code. If AuthSrc::AUTH_SRC_CONSOLE is set then username and password will be ignored and prompted in the console window, you can safely use "" for both parameters in this case.  
 
 **Send query or command**  
-var qry = db.query(String sql_stmt) returns Variant, if select statement success return an Array of Dictionaries can be zero length array, other will return int 0 on success or error code.  
+var qry = db.query(String sql_stmt) returns Variant, if select statement success return an Array of Dictionaries can be zero length array, other will return int 0 on success or error code. The value can be tested for NULL with typeof(dictionary.keyname) and the return will be 0 or TYPE_NIL, the text output will be keyname:Null with print().  
 
 **Set IP type**
-There are known issues with MariaDB and IPv6 where it doesn't respond to a IPv6 connection attempt. If connecting via localhost the Godot packet_peer_tcp default can be IPv6 for name resolution, you can either connect with 127.0.0.1 or change the IP type to IPv4 if your having problems, some have set the db user host as ::1 (IPv6 loopback) instead of localhost and it works fine.
+There are known issues with MariaDB and IPv6 where it doesn't respond to localhost. If connecting using localhost the Godot packet_peer_tcp default can be IPv6 for name resolution reulring in ::1, you can either connect with 127.0.0.1 instead of localhost or change the IP type to IPv4 if the db users host column is set to localhost and you are having problems, you can also set or add another db user entry host as ::1 (IPv6 loopback) instead of localhost and it works fine, you will need to comment out the db bind_address configuration for multiple ipv4 and ipv6 localhost entries.  
+
 db.set_ip_type(MariaDB::IpType type) sets the IP type.
 
 #### IpType enum

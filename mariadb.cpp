@@ -457,8 +457,6 @@ void MariaDB::m_server_init_handshake_v10(const std::vector<uint8_t> &src_buffer
 	return;
 } //server_init_handshake_v10
 
-
-
 void MariaDB::m_update_password(String password) {
 	if (is_pre_hashed_) return;
 
@@ -569,25 +567,29 @@ Variant MariaDB::query(String sql_stmt) {
 	//https://mariadb.com/kb/en/result-set-packets/
 	//	Resultset metadata
 	//	1 Column count packet
-	uint64_t col_cnt = srvr_response[++pkt_itr];
-	if (col_cnt == 0xFF) {
+	uint64_t col_cnt = 0;
+	uint8_t test = srvr_response[pkt_itr + 1];
+	if (test == 0xFF) {
 		int err = srvr_response[pkt_itr + 1] + (srvr_response[pkt_itr + 2] << 8);
 		m_handle_server_error(srvr_response, pkt_itr);
 		return err;
-	} else if (col_cnt == 0xFE) {
+	} else if (test == 0xFE) {
 		col_cnt = bytes_to_num<uint64_t>(srvr_response.data(), 8, pkt_itr);
-	} else if (col_cnt == 0xFD) {
+	} else if (test == 0xFD) {
 		col_cnt = bytes_to_num<uint64_t>(srvr_response.data(), 3, pkt_itr);
-	} else if (col_cnt == 0xFC) {
+	} else if (test == 0xFC) {
 		col_cnt = bytes_to_num<uint64_t>(srvr_response.data(), 2, pkt_itr);
-	} else if (col_cnt == 0xFB) {
+	} else if (test == 0xFB) {
 		//null value
 		//TODO(sigrud) needs investigation, not sure why this would happen
+	} else {
+		col_cnt = srvr_response[++pkt_itr];
 	}
 
 	//	for each column (i.e column_count times)
 	for (size_t itr = 0; itr < col_cnt; ++itr) {
 		pkt_len = m_get_packet_length(srvr_response, ++pkt_itr);
+
 		//seq_num = srvr_response[++pkt_itr];
 		++pkt_itr;
 
@@ -597,7 +599,7 @@ Variant MariaDB::query(String sql_stmt) {
 		len_encode = srvr_response[++pkt_itr];
 		m_get_packet_string(srvr_response, pkt_itr, len_encode);
 
-		//		string<lenenc> schema
+		//		string<lenenc> schema (database name)
 		len_encode = srvr_response[++pkt_itr];
 		m_get_packet_string(srvr_response, pkt_itr, len_encode);
 
@@ -611,12 +613,11 @@ Variant MariaDB::query(String sql_stmt) {
 
 		//		string<lenenc> column alias
 		len_encode = srvr_response[++pkt_itr];
-		m_get_packet_string(srvr_response, pkt_itr, len_encode);
+		String column_name = (char *)m_get_packet_string(srvr_response, pkt_itr, len_encode).data();
 
 		//		string<lenenc> column
 		len_encode = srvr_response[++pkt_itr];
-
-		String column_name = (char *)m_get_packet_string(srvr_response, pkt_itr, len_encode).data();
+		m_get_packet_string(srvr_response, pkt_itr, len_encode);
 
 		//TODO(sigrud) Enter column name and data type into vector of structs, the column name will be dictionary keynames
 
@@ -655,39 +656,55 @@ Variant MariaDB::query(String sql_stmt) {
 
 	Array arr;
 
+	//process values
 	while (!done && pkt_itr < srvr_response.size()) {
 		pkt_len = m_get_packet_length(srvr_response, ++pkt_itr);
 		//seq_num = srvr_response[++pkt_itr];
 		++pkt_itr;
-		len_encode = srvr_response[++pkt_itr];
 
-		if (len_encode == 0xFF) {
-			//ERR_Packet
-			int err = srvr_response[pkt_itr + 1] + (srvr_response[pkt_itr + 2] << 8);
-			m_handle_server_error(srvr_response, pkt_itr);
-			done = true;
-			return err;
-		} else if ((len_encode == 0x00 && dep_eof /* && pkt_len < 0xFFFFFF */) ||
-				   (len_encode == 0xFE && dep_eof && pkt_len < 0xFFFFFF)) {
-			//OK_Packet
-			done = true;
-		} else if (len_encode == 0xFE && pkt_len < 0xFFFFFF && !dep_eof) {
-			//EOF_Packet
-			done = true;
-		} else {
-			Dictionary dict;
-			//loop thru column data and create dictionary column name = key value is typed
-			//TODO(sigrud) use col_data.field_type to set type value
-			dict[col_data[0].name] = m_get_packet_string(srvr_response, pkt_itr, len_encode).c_str();
-			for (size_t itr = 1; itr < col_cnt; ++itr) {
-				len_encode = srvr_response[++pkt_itr];
-				dict[col_data[itr].name] = m_get_packet_string(srvr_response, pkt_itr, len_encode).c_str();
+		Dictionary dict;
+
+		for (size_t itr = 0; itr < col_cnt; ++itr) {
+			uint8_t test = srvr_response[pkt_itr + 1];
+			if (test == 0xFF) {
+				//ERR_Packet
+				int err = srvr_response[pkt_itr + 2] + (srvr_response[pkt_itr + 3] << 8);
+				m_handle_server_error(srvr_response, pkt_itr);
+				done = true;
+				return err;
+			} else if ((test == 0x00 && dep_eof /* && pkt_len < 0xFFFFFF */) ||
+					   (test == 0xFE && dep_eof && pkt_len < 0xFFFFFF)) {
+				//OK_Packet
+				done = true;
+			} else if (test == 0xFE && pkt_len < 0xFFFFFF && !dep_eof) {
+				//EOF_Packet
+				done = true;
+			} else {
+				if (test == 0xFE) {
+					len_encode = bytes_to_num<uint64_t>(srvr_response.data(), 8, pkt_itr);
+				} else if (col_cnt == 0xFD) {
+					len_encode = bytes_to_num<uint64_t>(srvr_response.data(), 3, pkt_itr);
+				} else if (col_cnt == 0xFC) {
+					len_encode = bytes_to_num<uint64_t>(srvr_response.data(), 2, pkt_itr);
+				} else if (test == 0xFB) {
+					//null value need to skip
+					len_encode = 0;
+					++pkt_itr;
+				} else {
+					len_encode = srvr_response[++pkt_itr];
+				}
+
+				if (len_encode > 0) {
+					dict[col_data[itr].name] = m_get_packet_string(srvr_response, pkt_itr, len_encode).c_str();
+				} else {
+					dict[col_data[itr].name] = Variant();
+				}
 			}
-			arr.push_back(dict);
 		}
+		if (!done)
+			arr.push_back(dict);
 
-	}
-
+		}
 	return Variant(arr);
 }
 
