@@ -197,6 +197,7 @@ void MariaDB::m_client_protocol_v41(const AuthType srvr_auth_type, const std::ve
 		} else if (srvr_response[itr] == 0xFF) {
 			m_handle_server_error(srvr_response, itr);
 			authenticated_ = false;
+			error_ |= (size_t)ErrorCodes::AUTH_FAILED;
 			return;
 		} else {
 			std::cout << "unhandled response code:" << std::hex << srvr_response[itr] << std::endl;
