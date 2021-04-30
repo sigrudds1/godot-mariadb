@@ -529,8 +529,8 @@ uint32_t MariaDB::connect_db(String hostname, int port, String dbname, String us
 
 void MariaDB::disconnect_db() {
 	if (stream_.is_connected_to_host()) {
-		uint8_t output[5] = { 0x01, 0x00, 0x00, 0x00, 0x01 };
-		stream_.put_data(output, 6); //say goodbye too the server
+		uint8_t output[5] = { 0x01, 0x00, 0x00, 0x00, 0x01};
+		stream_.put_data(output, 5); //say goodbye too the server
 		stream_.disconnect_from_host();
 	}
 	connected_ = false;
