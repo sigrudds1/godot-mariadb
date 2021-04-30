@@ -571,6 +571,7 @@ Variant MariaDB::query(String sql_stmt) {
 	uint64_t col_cnt = 0;
 	uint8_t test = srvr_response[pkt_itr + 1];
 	if (test == 0xFF) {
+		++pkt_itr;
 		int err = srvr_response[pkt_itr + 1] + (srvr_response[pkt_itr + 2] << 8);
 		m_handle_server_error(srvr_response, pkt_itr);
 		return err;
@@ -583,7 +584,10 @@ Variant MariaDB::query(String sql_stmt) {
 	} else if (test == 0xFB) {
 		//null value
 		//TODO(sigrud) needs investigation, not sure why this would happen
+	} else if (test == 0x00) {
+		return 0;
 	} else {
+	
 		col_cnt = srvr_response[++pkt_itr];
 	}
 
