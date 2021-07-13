@@ -670,7 +670,7 @@ Variant MariaDB::query(String sql_stmt) {
 		Dictionary dict;
 
 		for (size_t itr = 0; itr < col_cnt; ++itr) {
-			uint8_t test = srvr_response[pkt_itr + 1];
+			test = srvr_response[pkt_itr + 1];
 			if (test == 0xFF) {
 				//ERR_Packet
 				int err = srvr_response[pkt_itr + 2] + (srvr_response[pkt_itr + 3] << 8);
