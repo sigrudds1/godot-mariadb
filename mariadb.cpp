@@ -29,6 +29,13 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
+/*TODO(Sigrud) Add debug buffer to be fetched wtih methods
+*	Last query statment
+*	Last output to server
+*	Last response string from server
+*	Turn on outputs
+*/
+
 #include "mariadb.h"
 
 #include "utils/authentication.h"
@@ -61,6 +68,11 @@ void MariaDB::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_ip_type", "type"), &MariaDB::set_ip_type);
 	ClassDB::bind_method(D_METHOD("set_authtype", "auth_src", "auth_type", "is_pre_hashed"), &MariaDB::set_authtype);
 	ClassDB::bind_method(D_METHOD("query", "qry_stmt"), &MariaDB::query);
+	ClassDB::bind_method(D_METHOD("get_last_query"), &MariaDB::get_last_query);
+	ClassDB::bind_method(D_METHOD("get_last_query_converted"), &MariaDB::get_last_query_converted);
+	ClassDB::bind_method(D_METHOD("get_last_transmitted"), &MariaDB::get_last_transmitted);
+	ClassDB::bind_method(D_METHOD("get_last_response"), &MariaDB::get_last_response);
+	
 
 	BIND_ENUM_CONSTANT(IP_TYPE_IPV4);
 	BIND_ENUM_CONSTANT(IP_TYPE_IPV6);
@@ -299,6 +311,7 @@ std::vector<uint8_t> MariaDB::m_recv_data(uint32_t timeout) {
 
 	std::vector<uint8_t> return_vec(recv_buffer, recv_buffer + byte_cnt);
 	memfree(recv_buffer);
+	last_response_ = m_vector_byte_to_pool_byte(return_vec);
 	return return_vec;
 }
 
@@ -335,8 +348,13 @@ void MariaDB::m_handle_server_error(const std::vector<uint8_t> src_buffer, size_
 		}
 	}
 	m_print_error(msg);
-
 }
+
+String MariaDB::m_get_gdstring_from_buf(std::vector<uint8_t> buf) {
+	size_t start_pos = 0;
+	return m_get_gdstring_from_buf(buf, start_pos);
+}
+
 
 String MariaDB::m_get_gdstring_from_buf(std::vector<uint8_t> buf, size_t &start_pos) {
 	Vector<char> v_chr_temp;
@@ -457,8 +475,6 @@ void MariaDB::m_server_init_handshake_v10(const std::vector<uint8_t> &src_buffer
 	return;
 } //server_init_handshake_v10
 
-
-
 void MariaDB::m_update_password(String password) {
 	if (is_pre_hashed_) return;
 
@@ -485,6 +501,16 @@ void MariaDB::m_update_password(String password) {
 
 void MariaDB::m_update_username(String username) {
 	username_ = gdstring_to_vector<uint8_t>(username);
+}
+
+PoolByteArray MariaDB::m_vector_byte_to_pool_byte(std::vector<uint8_t> vec) {
+	PoolByteArray pba;
+	for (uint8_t i : vec) {
+		pba.push_back(i);
+	}
+
+	return pba;
+
 }
 
 //public
@@ -543,9 +569,11 @@ Variant MariaDB::query(String sql_stmt) {
 	if (!connected_) return (uint32_t)ErrorCodes::NOT_CONNECTED;
 	if (!authenticated_) return (uint32_t)ErrorCodes::AUTH_FAILED;
 
+	last_query_ = sql_stmt;
 	std::vector<uint8_t> send_buffer_vec;
 	std::vector<uint8_t> srvr_response;
 	std::vector<uint8_t> temp = gdstring_to_vector<uint8_t>(sql_stmt);
+	last_query_converted_ = m_vector_byte_to_pool_byte(temp);
 
 	size_t pkt_itr = 0;
 	size_t pkt_len; //techinically section length everything arrives in one stream packet
@@ -560,11 +588,17 @@ Variant MariaDB::query(String sql_stmt) {
 	m_add_packet_header(send_buffer_vec, 0);
 	stream_.put_data(send_buffer_vec.data(), send_buffer_vec.size());
 
+	last_transmitted_ = m_vector_byte_to_pool_byte(send_buffer_vec);
+	std::string s(send_buffer_vec.begin(), send_buffer_vec.end());
+	std::cout<< "transmitted : " << s << std::endl;
+
+
 	srvr_response = m_recv_data(1000);
 
 	pkt_len = m_get_packet_length(srvr_response, pkt_itr);
 	//uint8_t seq_num = srvr_response[++pkt_itr];
 	++pkt_itr;
+
 
 	//https://mariadb.com/kb/en/result-set-packets/
 	//	Resultset metadata
@@ -597,7 +631,7 @@ Variant MariaDB::query(String sql_stmt) {
 		len_encode = srvr_response[++pkt_itr];
 		m_get_packet_string(srvr_response, pkt_itr, len_encode);
 
-		//		string<lenenc> schema
+		//		string<lenenc> schema (database name)
 		len_encode = srvr_response[++pkt_itr];
 		m_get_packet_string(srvr_response, pkt_itr, len_encode);
 
@@ -611,12 +645,11 @@ Variant MariaDB::query(String sql_stmt) {
 
 		//		string<lenenc> column alias
 		len_encode = srvr_response[++pkt_itr];
-		m_get_packet_string(srvr_response, pkt_itr, len_encode);
+		String column_name = (char *)m_get_packet_string(srvr_response, pkt_itr, len_encode).data();
 
 		//		string<lenenc> column
 		len_encode = srvr_response[++pkt_itr];
-
-		String column_name = (char *)m_get_packet_string(srvr_response, pkt_itr, len_encode).data();
+		m_get_packet_string(srvr_response, pkt_itr, len_encode);
 
 		//TODO(sigrud) Enter column name and data type into vector of structs, the column name will be dictionary keynames
 
@@ -729,5 +762,21 @@ uint32_t MariaDB::set_authtype(AuthSrc auth_src, AuthType auth_type, bool is_pre
 
 void MariaDB::set_ip_type(IpType type) {
 	ip_type_ = type;
+}
+
+String MariaDB::get_last_query() {
+	return last_query_;
+}
+
+PoolByteArray MariaDB::get_last_query_converted(){
+	return last_query_converted_;
+}
+
+PoolByteArray MariaDB::get_last_transmitted() {
+	return last_transmitted_;
+}
+
+PoolByteArray MariaDB::get_last_response() {
+	return last_response_;
 }
 

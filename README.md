@@ -1,5 +1,5 @@
 # godot-mariadb
-A MariaDB module for the Godot Engine, currently 3.3.0 rc7 but should also work on 4.0.0.  
+A MariaDB module for the Godot Engine, currently 3.3.5 rc but should also work on 4.0.0.  
 
 This module has a self contained connector and does not use the GPL connectors from Maria/MySQL and will compile on Windows and Linux, possiblly Mac.  
 
@@ -39,12 +39,32 @@ var connect_ok = db.connect_db(String hostname, int port, String db_name, String
 **Send query or command**  
 var qry = db.query(String sql_stmt) returns Variant, if select statement success return an Array of Dictionaries can be zero length array, other will return int 0 on success or error code.  
 
-**Set IP type**
+**Set IP type** 
 There are known issues with MariaDB and IPv6 where it doesn't respond to a IPv6 connection attempt. If connecting via localhost the Godot packet_peer_tcp default can be IPv6 for name resolution, you can either connect with 127.0.0.1 or change the IP type to IPv4 if your having problems, some have set the db user host as ::1 (IPv6 loopback) instead of localhost and it works fine.
 db.set_ip_type(MariaDB::IpType type) sets the IP type.
+
+**Get the last query statement** 
+Returns the String used in the query, this was implemented to troublehsoot characterset issues.
+String db.get_last_query()
+
+**Get the last query statement converted to uint8_t** 
+Returns the vector<uint8_t> as PoolByteArray used in the query just before transmitting to the server, this was implemented to troublehsoot characterset issues.
+PoolByteArray db.get_last_query_converted()
+
+**Get the stream send to the DB server** 
+Returns the vector<uint8_t> send to the server, this includes the protocol header.
+PoolByteArray db.get_last_transmitted()
+
+**Get the stream received from the DB server response** 
+Returns the vector<uint8_t> recieved from the server.
+PoolByteArray db.get_last_response()
 
 #### IpType enum
 Set with MariaDB.IP_TYPE_...
 1. IP_TYPE_IPV4
 2. IP_TYPE_IPV6
 3. IP_TYPE_ANY
+
+
+#### Updates
+2021/11/04 - Added methods to fetch last query and messages from thw DB server.

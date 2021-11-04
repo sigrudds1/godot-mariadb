@@ -168,6 +168,10 @@ private:
 
 	StreamPeerTCP stream_;
 	String server_version_;
+	String last_query_;
+	PoolByteArray last_query_converted_;
+	PoolByteArray last_transmitted_;
+	PoolByteArray last_response_;
 
 
 	/**
@@ -181,6 +185,7 @@ private:
 	void m_connect(IP_Address ip, int port);
 
 	String m_get_gdstring_from_buf(std::vector<uint8_t> buf, size_t &start_pos);
+	String m_get_gdstring_from_buf(std::vector<uint8_t> buf);
 
 
 	size_t m_get_packet_length(const std::vector<uint8_t> src_buf, size_t &start_pos);
@@ -213,6 +218,7 @@ private:
 	void m_server_init_handshake_v10(const std::vector<uint8_t> &src_buffer);
 	void m_update_password(String password);
 	void m_update_username(String username);
+	PoolByteArray m_vector_byte_to_pool_byte(std::vector<uint8_t> vec);
 
 protected:
 	static void _bind_methods();
@@ -249,6 +255,10 @@ public:
 	uint32_t set_authtype(AuthSrc auth_src, AuthType auth_type, bool is_pre_hashed = true);
 
 	void set_ip_type(IpType type);
+	String get_last_query();
+	PoolByteArray get_last_query_converted();
+	PoolByteArray get_last_transmitted();
+	PoolByteArray get_last_response();
 
 	//TODO(sigrud) Async Callbacks
 
