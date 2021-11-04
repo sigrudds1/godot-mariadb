@@ -39,36 +39,35 @@ var connect_ok = db.connect_db(String hostname, int port, String db_name, String
 **Send query or command**  
 var qry = db.query(String sql_stmt) returns Variant, if select statement success return an Array of Dictionaries can be zero length array, other will return int 0 on success or error code. The value can be tested for NULL with typeof(dictionary.keyname) and the return will be 0 or TYPE_NIL, the text output will be keyname:Null with print(). Errors will also be output to the console with full description of the error from the DB server.  
 
-**Set IP type** 
+**Set IP type**  
 There are known issues with MariaDB and IPv6 where it doesn't respond to a IPv6 connection attempt. If connecting via localhost the Godot packet_peer_tcp default can be IPv6 for name resolution, you can either connect with 127.0.0.1 or change the IP type to IPv4 if your having problems, some have set the db user host as ::1 (IPv6 loopback) instead of localhost and it works fine.
-=======
-**Set IP type**
+
+**Set IP type**  
 There are known issues with MariaDB and IPv6 where it doesn't respond to localhost. If connecting using localhost the Godot stream_peer_tcp default can be IPv6 for name resolution resulting in ::1, you can either connect with 127.0.0.1 instead of localhost or change the IP type to IPv4 if the db users host column is set to localhost and you are having problems, you can also set or add another db user entry host as ::1 (IPv6 loopback) instead of localhost and it works fine, you will need to comment out the db bind_address configuration for multiple ipv4 and ipv6 localhost entries.  
 
 db.set_ip_type(MariaDB::IpType type) sets the IP type.
 
-**Get the last query statement** 
+**Get the last query statement**  
 Returns the String used in the query, this was implemented to troublehsoot characterset issues.
 String db.get_last_query()
 
-**Get the last query statement converted to uint8_t** 
+**Get the last query statement converted to uint8_t**  
 Returns the vector<uint8_t> as PoolByteArray used in the query just before transmitting to the server, this was implemented to troublehsoot characterset issues.
 PoolByteArray db.get_last_query_converted()
 
-**Get the stream send to the DB server** 
+**Get the stream send to the DB server**  
 Returns the vector<uint8_t> send to the server, this includes the protocol header.
 PoolByteArray db.get_last_transmitted()
 
-**Get the stream received from the DB server response** 
+**Get the stream received from the DB server response**  
 Returns the vector<uint8_t> recieved from the server.
 PoolByteArray db.get_last_response()
 
-#### IpType enum
+#### IpType enum  
 Set with MariaDB.IP_TYPE_...
 1. IP_TYPE_IPV4
 2. IP_TYPE_IPV6
 3. IP_TYPE_ANY
-
 
 #### Updates
 2021/11/04 - Added methods to fetch last query and messages from thw DB server.
