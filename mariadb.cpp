@@ -48,10 +48,12 @@
 #include <iterator>
 
 #include <core/os/memory.h>
+#include <core/variant.h>
 #include <mbedtls/sha512.h>
 
 MariaDB::MariaDB() {
 }
+
 
 MariaDB::~MariaDB() {
 	//close the connection
@@ -65,13 +67,14 @@ MariaDB::~MariaDB() {
 void MariaDB::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("connect_db", "hostname", "port", "database", "username", "password"), &MariaDB::connect_db);
 	ClassDB::bind_method(D_METHOD("disconnect_db"), &MariaDB::disconnect_db);
-	ClassDB::bind_method(D_METHOD("set_ip_type", "type"), &MariaDB::set_ip_type);
-	ClassDB::bind_method(D_METHOD("set_authtype", "auth_src", "auth_type", "is_pre_hashed"), &MariaDB::set_authtype);
-	ClassDB::bind_method(D_METHOD("query", "qry_stmt"), &MariaDB::query);
 	ClassDB::bind_method(D_METHOD("get_last_query"), &MariaDB::get_last_query);
 	ClassDB::bind_method(D_METHOD("get_last_query_converted"), &MariaDB::get_last_query_converted);
-	ClassDB::bind_method(D_METHOD("get_last_transmitted"), &MariaDB::get_last_transmitted);
 	ClassDB::bind_method(D_METHOD("get_last_response"), &MariaDB::get_last_response);
+	ClassDB::bind_method(D_METHOD("get_last_transmitted"), &MariaDB::get_last_transmitted);
+	ClassDB::bind_method(D_METHOD("set_authtype", "auth_src", "auth_type", "is_pre_hashed"), &MariaDB::set_authtype);
+	ClassDB::bind_method(D_METHOD("set_dbl2string", "is_str"), &MariaDB::set_dbl2string);
+	ClassDB::bind_method(D_METHOD("set_ip_type", "type"), &MariaDB::set_ip_type);
+	ClassDB::bind_method(D_METHOD("query", "qry_stmt"), &MariaDB::query);
 	
 
 	BIND_ENUM_CONSTANT(IP_TYPE_IPV4);
@@ -82,6 +85,7 @@ void MariaDB::_bind_methods() {
 	BIND_ENUM_CONSTANT(AUTH_TYPE_MYSQL_NATIVE);
 	BIND_ENUM_CONSTANT(AUTH_TYPE_ED25519);
 }
+
 
 //Custom Functions
 //private
@@ -248,6 +252,7 @@ void MariaDB::m_client_protocol_v41(const AuthType srvr_auth_type, const std::ve
 	}
 }
 
+
 void MariaDB::m_connect(IP_Address ip, int port) {
 	error_ = 0;
 	stream_.connect_to_host(ip, port);
@@ -282,6 +287,33 @@ void MariaDB::m_connect(IP_Address ip, int port) {
 	}
 } //m_connect
 
+
+Variant MariaDB::m_get_gd_type_data(int db_field_type, const char *data) {
+	switch (db_field_type) {
+		case 1:// MYSQL_TYPE_TINY
+		case 2:// MYSQL_TYPE_SHORT
+		case 3:// MYSQL_TYPE_LONG
+		case 8:// MYSQL_TYPE_LONGLONG
+			return atoi(data);
+			break;
+		case 0:// MYSQL_TYPE_DECIMAL
+		case 4:// MYSQL_TYPE_FLOAT
+			return atof(data);
+			break;
+		case 5: // MYSQL_TYPE_DOUBLE
+			if (dbl_to_string_) {
+				return data;
+			} else {
+				return atof(data);
+			}
+			break;
+		default:
+			return data;
+	}
+	return 0;
+}
+
+
 MariaDB::AuthType MariaDB::m_get_server_auth_type(String srvr_auth_name) {
 	AuthType server_auth_type = AUTH_TYPE_UNKNOWN;
 	if (srvr_auth_name == "mysql_native_password") {
@@ -292,6 +324,7 @@ MariaDB::AuthType MariaDB::m_get_server_auth_type(String srvr_auth_name) {
 	//TODO(sigrud) Add cached_sha2 for mysql 
 	return server_auth_type;
 }
+
 
 std::vector<uint8_t> MariaDB::m_recv_data(uint32_t timeout) {
 	int byte_cnt = 0;
@@ -316,9 +349,11 @@ std::vector<uint8_t> MariaDB::m_recv_data(uint32_t timeout) {
 	return return_vec;
 }
 
+
 void MariaDB::m_print_error(std::string error) {
 	std::cout << error << std::endl;
 }
+
 
 void MariaDB::m_handle_server_error(const std::vector<uint8_t> src_buffer, size_t &last_pos) {
 	//REF https://mariadb.com/kb/en/err_packet/
@@ -351,6 +386,7 @@ void MariaDB::m_handle_server_error(const std::vector<uint8_t> src_buffer, size_
 	m_print_error(msg);
 }
 
+
 String MariaDB::m_get_gdstring_from_buf(std::vector<uint8_t> buf) {
 	size_t start_pos = 0;
 	return m_get_gdstring_from_buf(buf, start_pos);
@@ -366,6 +402,7 @@ String MariaDB::m_get_gdstring_from_buf(std::vector<uint8_t> buf, size_t &start_
 	return (String)v_chr_temp.ptr();
 }
 
+
 size_t MariaDB::m_get_packet_length(const std::vector<uint8_t> src_buf, size_t &start_pos) {
 	size_t pkt_sz = (size_t)src_buf[start_pos];
 	pkt_sz += (size_t)src_buf[++start_pos] << 8;
@@ -373,11 +410,13 @@ size_t MariaDB::m_get_packet_length(const std::vector<uint8_t> src_buf, size_t &
 	return pkt_sz;
 }
 
+
 std::vector<uint8_t> MariaDB::m_get_password_hash(const AuthType authtype) {
 	std::vector<uint8_t> password_hash;
 
 	return password_hash;
 }
+
 
 std::string MariaDB::m_get_packet_string(const std::vector<uint8_t> &src_buf, size_t &last_pos, size_t byte_cnt) {
 	std::string result;
@@ -386,6 +425,7 @@ std::string MariaDB::m_get_packet_string(const std::vector<uint8_t> &src_buf, si
 
 	return result;
 }
+
 
 void MariaDB::m_server_init_handshake_v10(const std::vector<uint8_t> &src_buffer) {
 	uint16_t status = 0;
@@ -403,7 +443,7 @@ void MariaDB::m_server_init_handshake_v10(const std::vector<uint8_t> &src_buffer
 
 	//4bytes - from server version string nul +1, doesn't appear to be needed.
 	//uint32_t connection_id = bytes_to_num<uint32_t>(src_buffer.data(), 4, itr);
-	bytes_to_num<uint32_t>(src_buffer.data(), 4, itr);
+	bytes_to_num_itr<uint32_t>(src_buffer.data(), 4, itr);
 
 	//salt part 1
 	for (size_t j = 0; j < 8; j++)
@@ -476,6 +516,7 @@ void MariaDB::m_server_init_handshake_v10(const std::vector<uint8_t> &src_buffer
 	return;
 } //server_init_handshake_v10
 
+
 void MariaDB::m_update_password(String password) {
 	if (is_pre_hashed_) return;
 
@@ -500,9 +541,11 @@ void MariaDB::m_update_password(String password) {
 	//password_.insert(password_.end(), sha256, sha256 + 32);
 }
 
+
 void MariaDB::m_update_username(String username) {
 	username_ = gdstring_to_vector<uint8_t>(username);
 }
+
 
 PoolByteArray MariaDB::m_vector_byte_to_pool_byte(std::vector<uint8_t> vec) {
 	PoolByteArray pba;
@@ -513,6 +556,7 @@ PoolByteArray MariaDB::m_vector_byte_to_pool_byte(std::vector<uint8_t> vec) {
 	return pba;
 
 }
+
 
 //public
 uint32_t MariaDB::connect_db(String hostname, int port, String dbname, String username, String password) {
@@ -555,6 +599,7 @@ uint32_t MariaDB::connect_db(String hostname, int port, String dbname, String us
 	return error_;
 }
 
+
 void MariaDB::disconnect_db() {
 	if (stream_.is_connected_to_host()) {
 		uint8_t output[5] = { 0x01, 0x00, 0x00, 0x00, 0x01};
@@ -564,6 +609,7 @@ void MariaDB::disconnect_db() {
 	connected_ = false;
 	authenticated_ = false;
 }
+
 
 Variant MariaDB::query(String sql_stmt) {
 	connected_ = stream_.is_connected_to_host();
@@ -590,16 +636,14 @@ Variant MariaDB::query(String sql_stmt) {
 	stream_.put_data(send_buffer_vec.data(), send_buffer_vec.size());
 
 	last_transmitted_ = m_vector_byte_to_pool_byte(send_buffer_vec);
-	std::string s(send_buffer_vec.begin(), send_buffer_vec.end());
-	std::cout<< "transmitted : " << s << std::endl;
-
+	//std::string s(send_buffer_vec.begin(), send_buffer_vec.end());
+	//std::cout<< "transmitted : " << s << std::endl;
 
 	srvr_response = m_recv_data(1000);
 
 	pkt_len = m_get_packet_length(srvr_response, pkt_itr);
 	//uint8_t seq_num = srvr_response[++pkt_itr];
 	++pkt_itr;
-
 
 	//https://mariadb.com/kb/en/result-set-packets/
 	//	Resultset metadata
@@ -612,11 +656,11 @@ Variant MariaDB::query(String sql_stmt) {
 		m_handle_server_error(srvr_response, pkt_itr);
 		return err;
 	} else if (test == 0xFE) {
-		col_cnt = bytes_to_num<uint64_t>(srvr_response.data(), 8, pkt_itr);
+		col_cnt = bytes_to_num_itr<uint64_t>(srvr_response.data(), 8, pkt_itr);
 	} else if (test == 0xFD) {
-		col_cnt = bytes_to_num<uint64_t>(srvr_response.data(), 3, pkt_itr);
+		col_cnt = bytes_to_num_itr<uint64_t>(srvr_response.data(), 3, pkt_itr);
 	} else if (test == 0xFC) {
-		col_cnt = bytes_to_num<uint64_t>(srvr_response.data(), 2, pkt_itr);
+		col_cnt = bytes_to_num_itr<uint64_t>(srvr_response.data(), 2, pkt_itr);
 	} else if (test == 0xFB) {
 		//null value
 		//TODO(sigrud) needs investigation, not sure why this would happen
@@ -674,8 +718,9 @@ Variant MariaDB::query(String sql_stmt) {
 		++pkt_itr; //remaining bytes in packet section
 
 		//		int<2> character set number
-		uint16_t char_set = bytes_to_num<uint16_t>(srvr_response.data(), 2, pkt_itr);
-		//		int<4> max. column size
+		uint16_t char_set = bytes_to_num_itr<uint16_t>(srvr_response.data(), 2, pkt_itr);
+		//		int<4> max. column size the number in parenthesis eg int(10), varchar(255)
+		//uint32_t col_size = bytes_to_num_itr<uint32_t>(srvr_response.data(), 4, pkt_itr);
 		pkt_itr += 4;
 		//		int<1> Field types
 		uint8_t field_type = srvr_response[++pkt_itr];
@@ -722,11 +767,11 @@ Variant MariaDB::query(String sql_stmt) {
 				done = true;
 			} else {
 				if (test == 0xFE) {
-					len_encode = bytes_to_num<uint64_t>(srvr_response.data(), 8, pkt_itr);
+					len_encode = bytes_to_num_itr<uint64_t>(srvr_response.data(), 8, pkt_itr);
 				} else if (col_cnt == 0xFD) {
-					len_encode = bytes_to_num<uint64_t>(srvr_response.data(), 3, pkt_itr);
+					len_encode = bytes_to_num_itr<uint64_t>(srvr_response.data(), 3, pkt_itr);
 				} else if (col_cnt == 0xFC) {
-					len_encode = bytes_to_num<uint64_t>(srvr_response.data(), 2, pkt_itr);
+					len_encode = bytes_to_num_itr<uint64_t>(srvr_response.data(), 2, pkt_itr);
 				} else if (test == 0xFB) {
 					//null value need to skip
 					len_encode = 0;
@@ -736,7 +781,10 @@ Variant MariaDB::query(String sql_stmt) {
 				}
 
 				if (len_encode > 0) {
-					dict[col_data[itr].name] = m_get_packet_string(srvr_response, pkt_itr, len_encode).c_str();
+
+					//dict[col_data[itr].name] = m_get_packet_string(srvr_response, pkt_itr, len_encode).c_str();
+					dict[col_data[itr].name] = m_get_gd_type_data(col_data[itr].field_type,
+							m_get_packet_string(srvr_response, pkt_itr, len_encode).c_str());
 				} else {
 					dict[col_data[itr].name] = Variant();
 				}
@@ -784,6 +832,12 @@ uint32_t MariaDB::set_authtype(AuthSrc auth_src, AuthType auth_type, bool is_pre
 
 	return (uint32_t)ErrorCodes::NO_ERROR;
 }
+
+
+void MariaDB::set_dbl2string(bool set_string) {
+	dbl_to_string_ = set_string;
+}
+
 
 void MariaDB::set_ip_type(IpType type) {
 	ip_type_ = type;

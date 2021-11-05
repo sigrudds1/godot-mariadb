@@ -70,4 +70,9 @@ Set with MariaDB.IP_TYPE_...
 3. IP_TYPE_ANY
 
 #### Updates
-2021/11/04 - Added methods to fetch last query and messages from thw DB server.
+2021/11/04 0245 PST - Added methods to fetch last query and messages from thw DB server.
+2021/11/04 2045 PST - Adopted and added to fork https://github.com/bpodrygajlo/godot-mariadb/commit/711469d32c7be60852ef05f60a9fff78129c2e09 TY Czolzen
+	Queries will now return numeric types instead of TYPE_STRING depending on the SQL Column type; 
+	tinyint to longlong will return TYPE_INT, float, double will return TYPE_REAL. For double there is an flag 
+	to set (db.set_dbl2string(true|false), default false, if TYPE_STRING is preferred to help with floating point precision since 
+	Godot is default float precision, however, insertion is still limited unless done in c++ extension and stilllimited to Maria DB limitations.

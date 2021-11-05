@@ -146,8 +146,8 @@ private:
 		uint8_t field_type;
 	};
 
-	const std::vector<String> kAuthTypeServerNames = { "unknown", "mysql_native_password", "client_ed25519" }; 
-
+	const std::vector<String> kAuthTypeServerNames = { "unknown", "mysql_native_password", "client_ed25519" };
+	bool dbl_to_string_ = false;
 	IpType ip_type_ = IpType::IP_TYPE_ANY;
 	AuthSrc auth_src_ = AUTH_SRC_UNKNOWN;
 	AuthType client_auth_type_ = AUTH_TYPE_UNKNOWN;
@@ -183,6 +183,9 @@ private:
 	void m_add_packet_header(std::vector<uint8_t> &stream, int sequence);
 	void m_client_protocol_v41(const AuthType srvr_auth_type, const std::vector<uint8_t> srvr_salt);
 	void m_connect(IP_Address ip, int port);
+
+	Variant m_get_gd_type_data(int db_field_type, const char *data);
+
 
 	String m_get_gdstring_from_buf(std::vector<uint8_t> buf, size_t &start_pos);
 	String m_get_gdstring_from_buf(std::vector<uint8_t> buf);
@@ -220,6 +223,7 @@ private:
 	void m_update_username(String username);
 	PoolByteArray m_vector_byte_to_pool_byte(std::vector<uint8_t> vec);
 
+
 protected:
 	static void _bind_methods();
 
@@ -253,7 +257,7 @@ public:
 	 * \return 				uint32_t 0 = no error, see error enum class ErrorCode
 	 */
 	uint32_t set_authtype(AuthSrc auth_src, AuthType auth_type, bool is_pre_hashed = true);
-
+	void set_dbl2string(bool set_string);
 	void set_ip_type(IpType type);
 	String get_last_query();
 	PoolByteArray get_last_query_converted();
