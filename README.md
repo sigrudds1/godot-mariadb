@@ -39,8 +39,9 @@ var connect_ok = db.connect_db(String hostname, int port, String db_name, String
 **Send query or command**  
 var qry = db.query(String sql_stmt) returns Variant, if select statement success return an Array of Dictionaries can be zero length array, other will return int 0 on success or error code. The value can be tested for NULL with typeof(dictionary.keyname) and the return will be 0 or TYPE_NIL, the text output will be keyname:Null with print(). Errors will also be output to the console with full description of the error from the DB server.  
 
-**Set IP type**  
-There are known issues with MariaDB and IPv6 where it doesn't respond to a IPv6 connection attempt. If connecting via localhost the Godot packet_peer_tcp default can be IPv6 for name resolution, you can either connect with 127.0.0.1 or change the IP type to IPv4 if your having problems, some have set the db user host as ::1 (IPv6 loopback) instead of localhost and it works fine.
+**Set DOUBLE as String**  
+db.set_dbl2string(true|false) default false
+Set the return type of a Double column type to String to peel off the digits past the decimal to try and preserve precision.
 
 **Set IP type**  
 There are known issues with MariaDB and IPv6 where it doesn't respond to localhost. If connecting using localhost the Godot stream_peer_tcp default can be IPv6 for name resolution resulting in ::1, you can either connect with 127.0.0.1 instead of localhost or change the IP type to IPv4 if the db users host column is set to localhost and you are having problems, you can also set or add another db user entry host as ::1 (IPv6 loopback) instead of localhost and it works fine, you will need to comment out the db bind_address configuration for multiple ipv4 and ipv6 localhost entries.  
@@ -73,6 +74,6 @@ Set with MariaDB.IP_TYPE_...
 2021/11/04 0245 PST - Added methods to fetch last query and messages from thw DB server.
 2021/11/04 2045 PST - Adopted and added to fork https://github.com/bpodrygajlo/godot-mariadb/commit/711469d32c7be60852ef05f60a9fff78129c2e09 TY Czolzen
 	Queries will now return numeric types instead of TYPE_STRING depending on the SQL Column type; 
-	tinyint to longlong will return TYPE_INT, float, double will return TYPE_REAL. For double there is an flag 
-	to set (db.set_dbl2string(true|false), default false, if TYPE_STRING is preferred to help with floating point precision since 
-	Godot is default float precision, however, insertion is still limited unless done in c++ extension and stilllimited to Maria DB limitations.
+	tinyint to longlong will return TYPE_INT, float, double will return TYPE_REAL. For double there is a flag 
+	to set db.set_dbl2string(true|false), default false, if TYPE_STRING is preferred to help with floating point precision since 
+	Godot is default float precision, however, insertion is still limited unless done in C++ extension and still limited to Maria DB limitations.
