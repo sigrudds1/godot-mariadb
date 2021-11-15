@@ -230,18 +230,13 @@ protected:
 public:
 	uint32_t connect_db(String hostname, int port, String dbname, String username = "", String password = "");
 	void disconnect_db();
+	String get_last_query();
+	PoolByteArray get_last_query_converted();
+	PoolByteArray get_last_response();
+	PoolByteArray get_last_transmitted();
+	bool is_connected_db();
 
-	//int execute(String command);
-	
 	Variant query(String sql_stmt);
-
-	/**
-	* \brief			Used for sql statement where only success or error return is needed.
-	*
-	* \param cmd		String sql_statement or server command.
-	* \return			int 0 for ok or error code.
-	*/
-	int command(String cmd);
 
 	void update_dbname(String dbname);
 
@@ -259,11 +254,6 @@ public:
 	uint32_t set_authtype(AuthSrc auth_src, AuthType auth_type, bool is_pre_hashed = true);
 	void set_dbl2string(bool set_string);
 	void set_ip_type(IpType type);
-	String get_last_query();
-	PoolByteArray get_last_query_converted();
-	PoolByteArray get_last_transmitted();
-	PoolByteArray get_last_response();
-
 	//TODO(sigrud) Async Callbacks
 
 	MariaDB();

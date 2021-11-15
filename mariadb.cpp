@@ -46,6 +46,7 @@
 #include <iostream>//for std::cout
 #include <algorithm>
 #include <iterator>
+#include <string>
 
 #include <core/os/memory.h>
 #include <core/variant.h>
@@ -71,6 +72,7 @@ void MariaDB::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_last_query_converted"), &MariaDB::get_last_query_converted);
 	ClassDB::bind_method(D_METHOD("get_last_response"), &MariaDB::get_last_response);
 	ClassDB::bind_method(D_METHOD("get_last_transmitted"), &MariaDB::get_last_transmitted);
+	ClassDB::bind_method(D_METHOD("is_connected_db"), &MariaDB::is_connected_db);
 	ClassDB::bind_method(D_METHOD("set_authtype", "auth_src", "auth_type", "is_pre_hashed"), &MariaDB::set_authtype);
 	ClassDB::bind_method(D_METHOD("set_dbl2string", "is_str"), &MariaDB::set_dbl2string);
 	ClassDB::bind_method(D_METHOD("set_ip_type", "type"), &MariaDB::set_ip_type);
@@ -611,6 +613,28 @@ void MariaDB::disconnect_db() {
 }
 
 
+String MariaDB::get_last_query() {
+	return last_query_;
+}
+
+PoolByteArray MariaDB::get_last_query_converted() {
+	return last_query_converted_;
+}
+
+PoolByteArray MariaDB::get_last_response() {
+	return last_response_;
+}
+
+PoolByteArray MariaDB::get_last_transmitted() {
+	return last_transmitted_;
+}
+
+bool MariaDB::is_connected_db() {
+	connected_ = stream_.is_connected_to_host();
+	return connected_;
+}
+
+
 Variant MariaDB::query(String sql_stmt) {
 	connected_ = stream_.is_connected_to_host();
 	if (!connected_) return (uint32_t)ErrorCodes::NOT_CONNECTED;
@@ -843,19 +867,4 @@ void MariaDB::set_ip_type(IpType type) {
 	ip_type_ = type;
 }
 
-String MariaDB::get_last_query() {
-	return last_query_;
-}
-
-PoolByteArray MariaDB::get_last_query_converted(){
-	return last_query_converted_;
-}
-
-PoolByteArray MariaDB::get_last_transmitted() {
-	return last_transmitted_;
-}
-
-PoolByteArray MariaDB::get_last_response() {
-	return last_response_;
-}
 
