@@ -258,7 +258,6 @@ void MariaDB::m_client_protocol_v41(const AuthType srvr_auth_type, const std::ve
 void MariaDB::m_connect(IP_Address ip, int port) {
 	error_ = 0;
 	stream_.connect_to_host(ip, port);
-	connected_ = stream_.is_connected_to_host();
 
 	std::vector<uint8_t> recv_buffer = m_recv_data(250);
 	if (recv_buffer.size() <= 4 ){
@@ -334,7 +333,7 @@ std::vector<uint8_t> MariaDB::m_recv_data(uint32_t timeout) {
 	bool replied = false;
 	uint32_t start_msec = OS::get_singleton()->get_ticks_msec();
 
-	while (!replied && (connected_ = stream_.is_connected_to_host()) && OS::get_singleton()->get_ticks_msec() - start_msec < timeout) {
+	while (!replied && stream_.is_connected_to_host() && OS::get_singleton()->get_ticks_msec() - start_msec < timeout) {
 		byte_cnt = stream_.get_available_bytes();
 		if (byte_cnt > 0) {
 			start_msec = OS::get_singleton()->get_ticks_msec();
@@ -562,7 +561,9 @@ PoolByteArray MariaDB::m_vector_byte_to_pool_byte(std::vector<uint8_t> vec) {
 
 //public
 uint32_t MariaDB::connect_db(String hostname, int port, String dbname, String username, String password) {
-	if (connected_) disconnect_db();
+	if (stream_.is_connected_to_host()) {
+		disconnect_db();
+	}
 
 	IP_Address ip = resolve_host(hostname, (IP::Type)ip_type_);
 	//std::cout << (ip.is_ipv4() ? "ipv4" : "ipv6") << std::endl;
@@ -608,7 +609,6 @@ void MariaDB::disconnect_db() {
 		stream_.put_data(output, 5); //say goodbye too the server
 		stream_.disconnect_from_host();
 	}
-	connected_ = false;
 	authenticated_ = false;
 }
 
@@ -630,14 +630,13 @@ PoolByteArray MariaDB::get_last_transmitted() {
 }
 
 bool MariaDB::is_connected_db() {
-	connected_ = stream_.is_connected_to_host();
-	return connected_;
+	return stream_.is_connected_to_host();
 }
 
 
 Variant MariaDB::query(String sql_stmt) {
-	connected_ = stream_.is_connected_to_host();
-	if (!connected_) return (uint32_t)ErrorCodes::NOT_CONNECTED;
+	bool connected = stream_.is_connected_to_host();
+	if (!connected) return (uint32_t)ErrorCodes::NOT_CONNECTED;
 	if (!authenticated_) return (uint32_t)ErrorCodes::AUTH_FAILED;
 
 	last_query_ = sql_stmt;

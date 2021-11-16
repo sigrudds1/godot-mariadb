@@ -157,7 +157,6 @@ private:
 	uint32_t client_extended_capabilities_ = 0;
 	uint32_t server_capabilities_ = 0;
 	uint32_t server_extended_capabilities_ = 0;
-	bool connected_ = false;
 	uint32_t error_ = 0;
 	bool is_mysql_ = false;
 	bool tls_enabled_ = false;
