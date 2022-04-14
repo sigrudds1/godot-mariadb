@@ -671,7 +671,7 @@ Variant MariaDB::query(String sql_stmt) {
 	send_buffer_vec.insert(send_buffer_vec.end(), temp.begin(), temp.end());
 	bool is_ok = true;
 	for (size_t i = 0; i < temp.size(), is_ok; i++) {
-		is_ok &= temp[i] == send_buffer_vec[i = 1];
+		is_ok &= temp[i] == send_buffer_vec[i + 1];
 	}
 
 	if (!is_ok) {
