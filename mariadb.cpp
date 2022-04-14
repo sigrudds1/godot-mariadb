@@ -678,7 +678,7 @@ Variant MariaDB::query(String sql_stmt) {
 	if (!is_ok) {
 		last_transmitted_ = m_vector_byte_to_pool_byte(send_buffer_vec);
 		std::cout << "Data conversion mismatch! Query stmt corrupted!" << std::endl;
-		return Variant(int(ERR_PACKET_SEQUENCE_ERROR));
+		return (uint32_t)ERR_PACKET_SEQUENCE_ERROR;
 	}
 
 	m_add_packet_header(send_buffer_vec, 0);
@@ -691,7 +691,7 @@ Variant MariaDB::query(String sql_stmt) {
 
 	if (!is_ok) {
 		std::cout << "Data conversion mismatch! Query stmt corrupted!" << std::endl;
-		return Variant(int(ERR_PACKET_SEQUENCE_ERROR));
+		return (uint32_t)ERR_PACKET_SEQUENCE_ERROR;
 	}
 
 	stream_.put_data(send_buffer_vec.data(), send_buffer_vec.size());
