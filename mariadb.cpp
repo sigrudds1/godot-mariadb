@@ -670,7 +670,7 @@ Variant MariaDB::query(String sql_stmt) {
 	send_buffer_vec.push_back(0x03);
 	send_buffer_vec.insert(send_buffer_vec.end(), temp.begin(), temp.end());
 	bool is_ok = true;
-	for (uint8_t i = 0; i < temp.size(), is_ok; i++) {
+	for (size_t i = 0; i < temp.size(), is_ok; i++) {
 		is_ok &= temp[i] == send_buffer_vec[i = 1];
 	}
 
