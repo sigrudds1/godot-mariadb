@@ -670,8 +670,9 @@ Variant MariaDB::query(String sql_stmt) {
 	send_buffer_vec.push_back(0x03);
 	send_buffer_vec.insert(send_buffer_vec.end(), temp.begin(), temp.end());
 	bool is_ok = true;
-	for (size_t i = 0; i < temp.size(), is_ok; i++) {
+	for (size_t i = 0; i < temp.size(); i++) {
 		is_ok &= temp[i] == send_buffer_vec[i + 1];
+		if (!is_ok) break;
 	}
 
 	if (!is_ok) {
@@ -681,8 +682,9 @@ Variant MariaDB::query(String sql_stmt) {
 	}
 
 	m_add_packet_header(send_buffer_vec, 0);
-	for (uint8_t i = 0; i < temp.size(), is_ok; i++) {
-		is_ok &= temp[i] == send_buffer_vec[i = 5];
+	for (uint8_t i = 0; i < temp.size(); i++) {
+		is_ok &= temp[i] == send_buffer_vec[i + 5];
+		if (!is_ok) break;
 	}
 
 	last_transmitted_ = m_vector_byte_to_pool_byte(send_buffer_vec);
