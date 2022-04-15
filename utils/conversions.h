@@ -62,8 +62,12 @@ uint8_t *cast_to_uint8_t(const T *ptr) {
 
 template <typename T>
 std::vector<T> gdstring_to_vector(String string) {
-	T *t = (T *)string.utf8().ptrw();
-	std::vector<T> vec(t, t + string.length());
+	//T *t = (T *)string.utf8().ptrw(); //breaks after 530ish characters corrupting the end 
+	//std::vector<T> vec(t, t + string.length());
+	std::vector<T> vec;
+	for (int i = 0; i < string.length(); i++) {
+		vec.push_back(string[i]);
+	}
 	return vec;
 }
 

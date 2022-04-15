@@ -44,6 +44,7 @@
 #include "utils/print_funcs.h"
 
 #include <iostream>//for std::cout
+//#include <ios>
 #include <algorithm>
 #include <iterator>
 #include <string>
@@ -82,11 +83,14 @@ void MariaDB::_bind_methods() {
 	BIND_ENUM_CONSTANT(IP_TYPE_IPV4);
 	BIND_ENUM_CONSTANT(IP_TYPE_IPV6);
 	BIND_ENUM_CONSTANT(IP_TYPE_ANY);
-	BIND_ENUM_CONSTANT(AUTH_SRC_CONSOLE);
+
+	BIND_ENUM_CONSTANT(AUTH_SRC_UNKNOWN);
 	BIND_ENUM_CONSTANT(AUTH_SRC_SCRIPT);
+	BIND_ENUM_CONSTANT(AUTH_SRC_CONSOLE);
+
+	BIND_ENUM_CONSTANT(AUTH_TYPE_UNKNOWN);
 	BIND_ENUM_CONSTANT(AUTH_TYPE_MYSQL_NATIVE);
 	BIND_ENUM_CONSTANT(AUTH_TYPE_ED25519);
-
 
 	BIND_ENUM_CONSTANT(ERR_NO_ERROR);
 	BIND_ENUM_CONSTANT(ERR_NO_RESPONSE);
@@ -98,6 +102,7 @@ void MariaDB::_bind_methods() {
 	BIND_ENUM_CONSTANT(ERR_AUTH_PLUGIN_NOT_SET);
 	BIND_ENUM_CONSTANT(ERR_AUTH_PLUGIN_INCOMPATIBLE);
 	BIND_ENUM_CONSTANT(ERR_AUTH_FAILED);
+	BIND_ENUM_CONSTANT(ERR_USERNAME_EMPTY);
 	BIND_ENUM_CONSTANT(ERR_PASSWORD_EMPTY);
 	BIND_ENUM_CONSTANT(ERR_DB_EMPTY);
 }
@@ -659,6 +664,31 @@ Variant MariaDB::query(String sql_stmt) {
 	std::vector<uint8_t> temp = gdstring_to_vector<uint8_t>(sql_stmt);
 	last_query_converted_ = m_vector_byte_to_pool_byte(temp);
 
+	//std::cout << std::endl;
+	//std::cout << std::endl;
+
+	//std::ios_base::fmtflags f(std::cout.flags()); //get cout flags
+
+	//for (size_t i = 0; i < temp.size(); i++) {
+	//	std::cout << std::setfill('0') << std::setw(2) << std::uppercase << std::hex
+	//		<< (0xFF & temp[i]) << " ";
+	//}
+	//std::cout << std::endl;
+	//std::cout << std::endl;
+	//for (int i = 0; i < sql_stmt.length(); i++) {
+	//	std::cout << std::setfill('0') << std::setw(2) << std::uppercase << std::hex
+	//		<< (0xFF & sql_stmt[i]) << " ";
+	//}
+
+	//std::cout.flags(f); //set flags to previous
+
+	//std::cout << std::endl;
+	//std::cout << std::endl;
+
+	//std::cout << "str len:" << sql_stmt.length() << std::endl;
+	//std::cout << "vec len:" << temp.size() << std::endl;
+	//std::cout << "pba len:" << last_query_converted_.size() << std::endl;
+
 	size_t pkt_itr = 0;
 	size_t pkt_len; //techinically section length everything arrives in one stream packet
 	size_t len_encode = 0;
@@ -669,31 +699,9 @@ Variant MariaDB::query(String sql_stmt) {
 
 	send_buffer_vec.push_back(0x03);
 	send_buffer_vec.insert(send_buffer_vec.end(), temp.begin(), temp.end());
-	bool is_ok = true;
-	for (size_t i = 0; i < temp.size(); i++) {
-		is_ok &= temp[i] == send_buffer_vec[i + 1];
-		if (!is_ok) break;
-	}
-
-	if (!is_ok) {
-		last_transmitted_ = m_vector_byte_to_pool_byte(send_buffer_vec);
-		std::cout << "Data conversion mismatch! Query stmt corrupted!" << std::endl;
-		return (uint32_t)ERR_PACKET_SEQUENCE_ERROR;
-	}
-
 	m_add_packet_header(send_buffer_vec, 0);
-	for (uint8_t i = 0; i < temp.size(); i++) {
-		is_ok &= temp[i] == send_buffer_vec[i + 5];
-		if (!is_ok) break;
-	}
 
 	last_transmitted_ = m_vector_byte_to_pool_byte(send_buffer_vec);
-
-	if (!is_ok) {
-		std::cout << "Data conversion mismatch! Query stmt corrupted!" << std::endl;
-		return (uint32_t)ERR_PACKET_SEQUENCE_ERROR;
-	}
-
 	stream_.put_data(send_buffer_vec.data(), send_buffer_vec.size());
 
 	//std::string s(send_buffer_vec.begin(), send_buffer_vec.end());
