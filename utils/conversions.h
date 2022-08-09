@@ -32,14 +32,14 @@
 #ifndef CONVERSIONS_H
 #define CONVERSIONS_H
 
-#include <core/ustring.h>
-#include <core/io/ip_address.h>
 #include <core/io/ip.h>
+#include <core/io/ip_address.h>
+#include <core/ustring.h>
 
 #include <cassert>
 #include <cstdint>
-#include <vector>
 #include <cstdlib>
+#include <vector>
 
 IP_Address resolve_host(String hostname, IP::Type type);
 
@@ -48,7 +48,8 @@ T bytes_to_num_itr(const uint8_t *src, const size_t byte_count, size_t &start_po
 	size_t count = byte_count;
 	T result = 0;
 
-	if (sizeof(T) < byte_count) count = sizeof(T);
+	if (sizeof(T) < byte_count)
+		count = sizeof(T);
 
 	for (size_t i = 0; i < count; ++i)
 		result |= static_cast<T>(src[++start_pos] << (i * 8));
@@ -62,7 +63,7 @@ uint8_t *cast_to_uint8_t(const T *ptr) {
 
 template <typename T>
 std::vector<T> gdstring_to_vector(String string) {
-	//T *t = (T *)string.utf8().ptrw(); //breaks after 530ish characters corrupting the end 
+	//T *t = (T *)string.utf8().ptrw(); //breaks after 530ish characters corrupting the end
 	//std::vector<T> vec(t, t + string.length());
 	std::vector<T> vec;
 	for (int i = 0; i < string.length(); i++) {
@@ -83,7 +84,6 @@ std::vector<T> gd_hexstring_to_vector(const String &hex) {
 	return bytes;
 }
 
-
 template <typename T>
 std::vector<uint8_t> value_to_bytestream_vec(T value, size_t stream_bytes) {
 	std::vector<uint8_t> vec;
@@ -93,6 +93,5 @@ std::vector<uint8_t> value_to_bytestream_vec(T value, size_t stream_bytes) {
 
 	return vec;
 }
-
 
 #endif // !CONVERSIONS_H

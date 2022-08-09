@@ -31,7 +31,6 @@
 
 #include "conversions.h"
 
-
 IP_Address resolve_host(String hostname, IP::Type type) {
 	IP_Address ip;
 	if (hostname.is_valid_ip_address()) {

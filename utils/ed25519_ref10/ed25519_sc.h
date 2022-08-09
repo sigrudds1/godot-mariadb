@@ -39,5 +39,4 @@
 void sc_reduce(uint8_t *s);
 void sc_muladd(uint8_t *s, const uint8_t *a, const uint8_t *b, const uint8_t *c);
 
-
 #endif // !ED25519_SC_H

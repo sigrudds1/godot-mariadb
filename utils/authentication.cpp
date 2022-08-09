@@ -53,5 +53,3 @@ std::vector<uint8_t> get_mysql_native_password_hash(std::vector<uint8_t> sha1_ha
 
 	return hash_out;
 }
-
-

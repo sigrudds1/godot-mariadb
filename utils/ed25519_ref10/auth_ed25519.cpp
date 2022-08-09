@@ -42,22 +42,21 @@ void ed25519_sign_msg(const uint8_t *pwd_sha512_src, const uint8_t *message_src,
 
 	ed25519_create_keypair(pwd_sha512_src, private_key, public_key);
 	ed25519_sign(message_src, message_len, public_key, private_key, signature_dst);
-
 }
 
 void ed25519_create_keypair(const uint8_t *pwd_sha512_src, uint8_t *private_key_dst, uint8_t *public_key_dst) {
 	/*REF RFC 8032 5.1.5 Key Generation https://tools.ietf.org/html/rfc8032#page-13
-	* The referenced private key that is ran thru sha512 is the password, since we are storing the hashed password
-	* in the module in case of a needed reconnection, the 1st step in RFC Key Generation will be skipped here.
-	*/ 
+	 * The referenced private key that is ran thru sha512 is the password, since we are storing the hashed password
+	 * in the module in case of a needed reconnection, the 1st step in RFC Key Generation will be skipped here.
+	 */
 
 	ge_p3 A;
 	std::copy(pwd_sha512_src, pwd_sha512_src + 64, private_key_dst);
-	
+
 	/*Step 2 of the RFC
-	* It references the first and last bits, but that is after pruning,
-	* I cheated and skipped pruning and reused the variable for the scalar functions.
-	*/ 
+	 * It references the first and last bits, but that is after pruning,
+	 * I cheated and skipped pruning and reused the variable for the scalar functions.
+	 */
 	private_key_dst[0] &= 248;
 	private_key_dst[31] &= 63;
 	private_key_dst[31] |= 64;
@@ -65,4 +64,3 @@ void ed25519_create_keypair(const uint8_t *pwd_sha512_src, uint8_t *private_key_
 	ge_scalarmult_base(&A, private_key_dst);
 	ge_p3_tobytes(public_key_dst, &A); //working, public key matched maria server.
 }
-

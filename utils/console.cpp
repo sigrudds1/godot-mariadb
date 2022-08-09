@@ -85,7 +85,6 @@ static void set_input_echo(bool do_echo) {
 #include <unistd.h>
 
 static bool is_cin_key() {
-
 	fd_set readfds;
 	FD_ZERO(&readfds);
 	FD_SET(0, &readfds);
@@ -132,7 +131,6 @@ static bool set_console_mode(tcflag_t mode) {
 }
 
 static void set_input_echo(bool do_echo) {
-
 	struct termios t;
 
 	/* Get console mode */
@@ -157,7 +155,6 @@ static void set_input_echo(bool do_echo) {
 #endif // #else _WIN32
 
 String get_gdstring_from_console(bool echo_input, uint64_t timeout_ms) {
-
 #if defined(_WIN32) || defined(_WIN64) || defined(WIN32) || defined(WIN64)
 	DWORD old_mode = 0;
 #else // #ifdef _WIN32
@@ -172,7 +169,8 @@ String get_gdstring_from_console(bool echo_input, uint64_t timeout_ms) {
 	std::cin.clear();
 
 	bool console_okay = get_console_mode(old_mode);
-	if (console_okay) set_input_echo(echo_input);
+	if (console_okay)
+		set_input_echo(echo_input);
 
 	if (timeout_ms > 0) {
 		start_time = OS::get_singleton()->get_system_time_msecs();
@@ -183,7 +181,8 @@ String get_gdstring_from_console(bool echo_input, uint64_t timeout_ms) {
 			char chr = 0;
 			while (chr != '\n' && chr != '\r') {
 				std::cin.get(chr);
-				if (chr != '\n' && chr != '\r') return_str += chr;
+				if (chr != '\n' && chr != '\r')
+					return_str += chr;
 				start_time = OS::get_singleton()->get_system_time_msecs();
 			}
 			std::cin.clear();
@@ -194,7 +193,8 @@ String get_gdstring_from_console(bool echo_input, uint64_t timeout_ms) {
 		}
 	}
 
-	if (console_okay) set_console_mode(old_mode);
+	if (console_okay)
+		set_console_mode(old_mode);
 
 	return return_str;
 }

@@ -38,7 +38,6 @@
 #include <core/os/memory.h>
 #include <mbedtls/sha512.h>
 
-
 void ed25519_sign(const uint8_t *message_src, size_t message_len, const uint8_t *public_key_src, const uint8_t *private_key_src, uint8_t *signature_dst) {
 	//message_len should be 32 coming from server
 

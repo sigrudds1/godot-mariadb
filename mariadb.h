@@ -41,11 +41,11 @@
 
 #include <vector>
 
-#include <core/reference.h>
-#include <core/io/stream_peer_tcp.h>
-#include <core/io/ip_address.h>
 #include <core/io/ip.h>
+#include <core/io/ip_address.h>
+#include <core/io/stream_peer_tcp.h>
 #include <core/os/thread.h>
+#include <core/reference.h>
 #include <core/ustring.h>
 
 constexpr int kPacketMaxSize = 0xffffff;
@@ -91,8 +91,8 @@ public:
 		ERR_PASSWORD_EMPTY,
 		ERR_DB_EMPTY
 	};
-private:
 
+private:
 	enum class Capabilities : uint32_t {
 		LONG_PASSWORD = (1UL << 0), //MySQL
 		MYSQL = (1UL << 0), //MariaDB - lets server know this is a mysql client
@@ -172,12 +172,11 @@ private:
 	PoolByteArray last_transmitted_;
 	PoolByteArray last_response_;
 
-
 	/**
 	 * \brief			Adds the packet size and sequence number to the beginning of the packet,
 	 *					it must be used once just before sending stream to server.
 	 * \param stream	std::vector<uint8_t> the stream to be modified.
-	 * \param sequance	int 
+	 * \param sequance	int
 	 */
 	void m_add_packet_header(std::vector<uint8_t> &stream, int sequence);
 	void m_client_protocol_v41(const AuthType srvr_auth_type, const std::vector<uint8_t> srvr_salt);
@@ -185,10 +184,8 @@ private:
 
 	Variant m_get_gd_type_data(int db_field_type, const char *data);
 
-
 	String m_get_gdstring_from_buf(std::vector<uint8_t> buf, size_t &start_pos);
 	String m_get_gdstring_from_buf(std::vector<uint8_t> buf);
-
 
 	size_t m_get_packet_length(const std::vector<uint8_t> src_buf, size_t &start_pos);
 
@@ -221,7 +218,6 @@ private:
 	void m_update_password(String password);
 	void m_update_username(String username);
 	PoolByteArray m_vector_byte_to_pool_byte(std::vector<uint8_t> vec);
-
 
 protected:
 	static void _bind_methods();

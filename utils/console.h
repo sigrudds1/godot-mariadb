@@ -3,9 +3,8 @@
 
 #include <core/ustring.h>
 
-#include <vector>
 #include <cstdint>
-
+#include <vector>
 
 String get_gdstring_from_console(bool echo_input = false, uint64_t timeout_ms = 0);
 

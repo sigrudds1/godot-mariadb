@@ -47,20 +47,20 @@ static uint64_t bytes_to_u64(const uint8_t *src, size_t byte_count) {
 }
 
 void fe_0(fe h) {
-		h[0] = 0;
-		h[1] = 0;
-		h[2] = 0;
-		h[3] = 0;
-		h[4] = 0;
-		h[5] = 0;
-		h[6] = 0;
-		h[7] = 0;
-		h[8] = 0;
-		h[9] = 0;
+	h[0] = 0;
+	h[1] = 0;
+	h[2] = 0;
+	h[3] = 0;
+	h[4] = 0;
+	h[5] = 0;
+	h[6] = 0;
+	h[7] = 0;
+	h[8] = 0;
+	h[9] = 0;
 }
 
 /*
-    h = 1
+	h = 1
 */
 
 void fe_1(fe h) {
@@ -77,15 +77,15 @@ void fe_1(fe h) {
 }
 
 /*
-    h = f + g
-    Can overlap h with f or g.
+	h = f + g
+	Can overlap h with f or g.
 
-    Preconditions:
-       |f| bounded by 1.1*2^25,1.1*2^24,1.1*2^25,1.1*2^24,etc.
-       |g| bounded by 1.1*2^25,1.1*2^24,1.1*2^25,1.1*2^24,etc.
+	Preconditions:
+	   |f| bounded by 1.1*2^25,1.1*2^24,1.1*2^25,1.1*2^24,etc.
+	   |g| bounded by 1.1*2^25,1.1*2^24,1.1*2^25,1.1*2^24,etc.
 
-    Postconditions:
-       |h| bounded by 1.1*2^26,1.1*2^25,1.1*2^26,1.1*2^25,etc.
+	Postconditions:
+	   |h| bounded by 1.1*2^26,1.1*2^25,1.1*2^26,1.1*2^25,etc.
 */
 
 void fe_add(fe h, const fe f, const fe g) {
@@ -94,10 +94,10 @@ void fe_add(fe h, const fe f, const fe g) {
 }
 
 /*
-    Replace (f,g) with (g,g) if b == 1;
-    replace (f,g) with (f,g) if b == 0.
+	Replace (f,g) with (g,g) if b == 1;
+	replace (f,g) with (f,g) if b == 0.
 
-    Preconditions: b in {0,1}.
+	Preconditions: b in {0,1}.
 */
 
 void fe_cmov(fe f, const fe g, unsigned int b) {
@@ -157,10 +157,10 @@ void fe_cmov(fe f, const fe g, unsigned int b) {
 }
 
 /*
-    Replace (f,g) with (g,f) if b == 1;
-    replace (f,g) with (f,g) if b == 0.
+	Replace (f,g) with (g,f) if b == 1;
+	replace (f,g) with (f,g) if b == 0.
 
-    Preconditions: b in {0,1}.
+	Preconditions: b in {0,1}.
 */
 
 void fe_cswap(fe f, fe g, unsigned int b) {
@@ -228,7 +228,7 @@ void fe_cswap(fe f, fe g, unsigned int b) {
 }
 
 /*
-    h = f
+	h = f
 */
 
 void fe_copy(fe h, const fe f) {
@@ -256,7 +256,7 @@ void fe_copy(fe h, const fe f) {
 }
 
 /*
-    Ignores top bit of h.
+	Ignores top bit of h.
 */
 void fe_frombytes(fe h, const uint8_t *s) {
 	int64_t h0 = bytes_to_u64(s, 4);
@@ -410,11 +410,11 @@ void fe_invert(fe out, const fe z) {
 }
 
 /*
-    return 1 if f is in {1,3,5,...,q-2}
-    return 0 if f is in {0,2,4,...,q-1}
+	return 1 if f is in {1,3,5,...,q-2}
+	return 0 if f is in {0,2,4,...,q-1}
 
-    Preconditions:
-       |f| bounded by 1.1*2^26,1.1*2^25,1.1*2^26,1.1*2^25,etc.
+	Preconditions:
+	   |f| bounded by 1.1*2^26,1.1*2^25,1.1*2^26,1.1*2^25,etc.
 */
 
 int fe_isnegative(const fe f) {
@@ -426,11 +426,11 @@ int fe_isnegative(const fe f) {
 }
 
 /*
-    return 1 if f == 0
-    return 0 if f != 0
+	return 1 if f == 0
+	return 0 if f != 0
 
-    Preconditions:
-       |f| bounded by 1.1*2^26,1.1*2^25,1.1*2^26,1.1*2^25,etc.
+	Preconditions:
+	   |f| bounded by 1.1*2^26,1.1*2^25,1.1*2^26,1.1*2^25,etc.
 */
 
 int fe_isnonzero(const fe f) {
@@ -447,35 +447,35 @@ int fe_isnonzero(const fe f) {
 }
 
 /*
-    h = f * g
-    Can overlap h with f or g.
+	h = f * g
+	Can overlap h with f or g.
 
-    Preconditions:
-       |f| bounded by 1.65*2^26,1.65*2^25,1.65*2^26,1.65*2^25,etc.
-       |g| bounded by 1.65*2^26,1.65*2^25,1.65*2^26,1.65*2^25,etc.
+	Preconditions:
+	   |f| bounded by 1.65*2^26,1.65*2^25,1.65*2^26,1.65*2^25,etc.
+	   |g| bounded by 1.65*2^26,1.65*2^25,1.65*2^26,1.65*2^25,etc.
 
-    Postconditions:
-       |h| bounded by 1.01*2^25,1.01*2^24,1.01*2^25,1.01*2^24,etc.
-    */
+	Postconditions:
+	   |h| bounded by 1.01*2^25,1.01*2^24,1.01*2^25,1.01*2^24,etc.
+	*/
 
 /*
-    Notes on implementation strategy:
+	Notes on implementation strategy:
 
-    Using schoolbook multiplication.
-    Karatsuba would save a little in some cost models.
+	Using schoolbook multiplication.
+	Karatsuba would save a little in some cost models.
 
-    Most multiplications by 2 and 19 are 32-bit precomputations;
-    cheaper than 64-bit postcomputations.
+	Most multiplications by 2 and 19 are 32-bit precomputations;
+	cheaper than 64-bit postcomputations.
 
-    There is one remaining multiplication by 19 in the carry chain;
-    one *19 precomputation can be merged into this,
-    but the resulting data flow is considerably less clean.
+	There is one remaining multiplication by 19 in the carry chain;
+	one *19 precomputation can be merged into this,
+	but the resulting data flow is considerably less clean.
 
-    There are 12 carries below.
-    10 of them are 2-way parallelizable and vectorizable.
-    Can get away with 11 carries, but then data flow is much deeper.
+	There are 12 carries below.
+	10 of them are 2-way parallelizable and vectorizable.
+	Can get away with 11 carries, but then data flow is much deeper.
 
-    With tighter constraints on inputs can squeeze carries into int32.
+	With tighter constraints on inputs can squeeze carries into int32.
 */
 
 void fe_mul(fe h, const fe f, const fe g) {
@@ -1388,11 +1388,11 @@ void fe_tobytes(uint8_t *s, const fe h) {
 
 	/* h10 = carry9 */
 	/*
-    Goal: Output h0+...+2^255 h10-2^255 q, which is between 0 and 2^255-20.
-    Have h0+...+2^230 h9 between 0 and 2^255-1;
-    evidently 2^255 h10-2^255 q = 0.
-    Goal: Output h0+...+2^230 h9.
-    */
+	Goal: Output h0+...+2^255 h10-2^255 q, which is between 0 and 2^255-20.
+	Have h0+...+2^230 h9 between 0 and 2^255-1;
+	evidently 2^255 h10-2^255 q = 0.
+	Goal: Output h0+...+2^230 h9.
+	*/
 	s[0] = (uint8_t)(h0 >> 0);
 	s[1] = (uint8_t)(h0 >> 8);
 	s[2] = (uint8_t)(h0 >> 16);
