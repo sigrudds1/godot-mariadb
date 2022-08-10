@@ -335,7 +335,7 @@ MariaDB::AuthType MariaDB::m_get_server_auth_type(String srvr_auth_name) {
 	} else if (srvr_auth_name == "client_ed25519") {
 		server_auth_type = AUTH_TYPE_ED25519;
 	}
-	//TODO(sigrud) Add cached_sha2 for mysql
+	//TODO(sigrudds1) Add cached_sha2 for mysql
 	return server_auth_type;
 }
 
@@ -479,7 +479,7 @@ void MariaDB::m_server_init_handshake_v10(const std::vector<uint8_t> &src_buffer
 		error_ = (uint32_t)ERR_CLIENT_PROTOCOL_INCOMPATIBLE;
 		return;
 	}
-	//TODO(sigrud) Make auth plugin not required if using ssl/tls
+	//TODO(sigrudds1) Make auth plugin not required if using ssl/tls
 	if (!(server_capabilities_ & (uint32_t)Capabilities::PLUGIN_AUTH)) {
 		error_ = (uint32_t)ERR_AUTH_PLUGIN_NOT_SET;
 		return;
@@ -491,7 +491,7 @@ void MariaDB::m_server_init_handshake_v10(const std::vector<uint8_t> &src_buffer
 	//6bytes - filler
 	itr += 6;
 
-	//TODO(sigrud) Handle MariaDB extended capablities, will have to parse server version string
+	//TODO(sigrudds1) Handle MariaDB extended capablities, will have to parse server version string
 
 	//4bytes - filler or server capabilities part 3 (mariadb v10.2 or later) "MariaDB extended capablities"
 	itr += 4;
@@ -542,7 +542,7 @@ void MariaDB::m_update_password(String password) {
 		password_hashed_.insert(password_hashed_.end(), sha512, sha512 + 64);
 	}
 
-	//TODO(sigrud) mysql caching_sha2_password
+	//TODO(sigrudds1) mysql caching_sha2_password
 	//uint8_t *sha256 = password.sha256_buffer().ptrw();
 	//password_.insert(password_.end(), sha256, sha256 + 32);
 }
@@ -716,7 +716,7 @@ Variant MariaDB::query(String sql_stmt) {
 		col_cnt = bytes_to_num_itr<uint64_t>(srvr_response.data(), 2, pkt_itr);
 	} else if (test == 0xFB) {
 		//null value
-		//TODO(sigrud) needs investigation, not sure why this would happen
+		//TODO(sigrudds1) needs investigation, not sure why this would happen
 	} else if (test == 0x00) {
 		return 0;
 	} else {
@@ -756,9 +756,9 @@ Variant MariaDB::query(String sql_stmt) {
 		len_encode = srvr_response[++pkt_itr];
 		m_get_packet_string(srvr_response, pkt_itr, len_encode);
 
-		//TODO(sigrud) Enter column name and data type into vector of structs, the column name will be dictionary keynames
+		//TODO(sigrudds1) Enter column name and data type into vector of structs, the column name will be dictionary keynames
 
-		//TODO(sigrud) Handle "MariaDB extended capablities" (several locations)
+		//TODO(sigrudds1) Handle "MariaDB extended capablities" (several locations)
 		//		if extended type supported (see MARIADB_CLIENT_EXTENDED_TYPE_INFO )
 		//			int<lenenc> length extended info
 		//			loop
@@ -849,7 +849,7 @@ Variant MariaDB::query(String sql_stmt) {
 
 void MariaDB::update_dbname(String dbname) {
 	dbname_ = gdstring_to_vector<uint8_t>(dbname);
-	//TODO(sigrud) If db is not the same and connected then change db on server
+	//TODO(sigrudds1) If db is not the same and connected then change db on server
 }
 
 uint32_t MariaDB::set_authtype(AuthSrc auth_src, AuthType auth_type, bool is_pre_hashed) {

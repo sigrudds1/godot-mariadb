@@ -5,7 +5,7 @@
 #include <iostream>
 #include <string>
 
-//TODO(sigrud) Use Godot's Logger for error msg instead fprintf stderr
+//TODO(sigrudds1) Use Godot's Logger for error msg instead fprintf stderr
 
 #if defined(_WIN32) || defined(_WIN64) || defined(WIN32) || defined(WIN64)
 #include <windows.h>

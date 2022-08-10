@@ -6,7 +6,7 @@
 
 std::vector<uint8_t> get_caching_sha2_password_hash(std::vector<uint8_t> sha256_hashed_once_password, std::vector<uint8_t> srvr_salt) {
 	//For MySQL compatibility, MariaDB does not support this auth method
-	//TODO(sigrud) Check validity, there seems to be a discrepency in description between Maria and MySQL and Maria was originally used as ref.
+	//TODO(sigrudds1) Check validity, there seems to be a discrepency in description between Maria and MySQL and Maria was originally used as ref.
 	constexpr int hash_size = 32;
 	uint8_t hash[hash_size] = {};
 	CryptoCore::sha256(sha256_hashed_once_password.data(), hash_size, hash);

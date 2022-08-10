@@ -29,10 +29,11 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-//TODO(sigrud) Add sha256 Authentication for MySQL alternative authentication
-//TODO(sigrud) Add cashing_sha2_password for MySQL alternative authentication
-//TODO(sigrud) Use virtuallock(windows) or mlock(linux) to prevent memory dump of username and password
-//TODO(sigrud) ASYNC callbacks using the username, signals maybe.
+//TODO(sigrudds1) Change license on pull request
+//TODO(sigrudds1) Add sha256 Authentication for MySQL alternative authentication
+//TODO(sigrudds1) Add cashing_sha2_password for MySQL alternative authentication
+//TODO(sigrudds1) Use virtuallock(windows) or mlock(linux) to prevent memory dump of username and password
+//TODO(sigrudds1) ASYNC callbacks using the username, signals maybe.
 
 #ifndef MARIADB_H
 #define MARIADB_H
@@ -211,7 +212,7 @@ private:
 	AuthType m_get_server_auth_type(String srvr_auth_name);
 
 	std::vector<uint8_t> m_recv_data(uint32_t timeout);
-	//TODO(sigrud) Add error log file using the username in the filename
+	//TODO(sigrudds1) Add error log file using the username in the filename
 	void m_print_error(std::string error);
 	void m_handle_server_error(const std::vector<uint8_t> src_buffer, size_t &last_pos);
 	void m_server_init_handshake_v10(const std::vector<uint8_t> &src_buffer);
@@ -235,7 +236,7 @@ public:
 
 	void update_dbname(String dbname);
 
-	//TODO(sigrud) Implement SSL/TLS
+	//TODO(sigrudds1) Implement SSL/TLS
 	//void tls_enable(bool enable);
 
 	/**
@@ -249,7 +250,7 @@ public:
 	uint32_t set_authtype(AuthSrc auth_src, AuthType auth_type, bool is_pre_hashed = true);
 	void set_dbl2string(bool set_string);
 	void set_ip_type(IpType type);
-	//TODO(sigrud) Async Callbacks
+	//TODO(sigrudds1) Async Callbacks
 
 	MariaDB();
 	~MariaDB();
