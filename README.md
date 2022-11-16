@@ -10,7 +10,7 @@ Copy to "the-godot-folder"/modules/mariadb/ and run scons, see https://docs.godo
 git clone https://github.com/sigrudds1/godot-mariadb.git "the-godot-folder"/modules/mariadb 
 
 I will have a tutorial up on how to compile and use this module on https://vikingtinkerer.com, once it is stable.  
-For those who requested it https://buymeacoffee.com/VikingTinkerer.  
+[Buy Me A Coffee](https://buymeacoffee.com/VikingTinkerer)  
 ### Use (gdscipt)  
 
 **Create the object**  
