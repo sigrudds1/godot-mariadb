@@ -1,5 +1,5 @@
 # godot-mariadb
-A MariaDB module for the Godot Engine, currently works on 3.5.1 but should also work on any 3.x, checkout the 4.0 branch for Godot 4.x.  
+A MariaDB module for the Godot Engine, created on 3.4 and currently works on 3.5.1 but should also work on any 3.x, checkout the 4.0 branch for Godot 4.x.  
 
 This module has a self contained connector and does not use the GPL connectors from Maria/MySQL and will compile on Windows, Linux, probably Mac.  
 
