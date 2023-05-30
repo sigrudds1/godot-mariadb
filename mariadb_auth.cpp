@@ -1,6 +1,9 @@
-void register_mariadb_types();
-void unregister_mariadb_types();
-
+/*************************************************************************/
+/*  authentication.cpp                                                   */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
 /*************************************************************************/
 /* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
 /* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
@@ -25,12 +28,35 @@ void unregister_mariadb_types();
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef MARIADB_REGISTER_TYPES_H
-#define MARIADB_REGISTER_TYPES_H
+#include "mariadb_auth.h"
+#include "utils/ed25519_ref10/ed25519_auth.h"
+#include <core/crypto/crypto_core.h>
 
-#include "modules/register_module_types.h"
 
-void initialize_mariadb_module(ModuleInitializationLevel p_level);
-void uninitialize_mariadb_module(ModuleInitializationLevel p_level);
+Vector<uint8_t> get_client_ed25519_signature(const Vector<uint8_t> p_sha512_hashed_passwd, const Vector<uint8_t> p_svr_msg) {
+	//MySQL does not supprt this auth method
+	Vector<uint8_t> rtn_val;
+	rtn_val.resize(64);
+	ed25519_sign_msg(p_sha512_hashed_passwd.ptr(), p_svr_msg.ptr(), 32, rtn_val.ptrw());
+	return rtn_val;
+}
 
-#endif // MARIADB_REGISTER_TYPES_H
+Vector<uint8_t> get_mysql_native_password_hash(Vector<uint8_t> p_sha1_hashed_passwd, Vector<uint8_t> p_srvr_salt) {
+	//per https://mariadb.com/kb/en/connection/#mysql_native_password-plugin
+	//Both MariaDB and MySQL support this auth method
+	uint8_t hash[20] = {};
+	CryptoCore::sha1(p_sha1_hashed_passwd.ptr(), 20, hash);
+	uint8_t combined_salt_pwd[40] = {};
+	for (size_t i = 0; i < 20; i++) {
+		combined_salt_pwd[i] = p_srvr_salt[i];
+		combined_salt_pwd[i + 20] = hash[i];
+	}
+
+	CryptoCore::sha1((const uint8_t *)combined_salt_pwd, 40, hash);
+	Vector<uint8_t> hash_out;
+	for (size_t i = 0; i < 20; i++) {
+		hash_out.push_back(p_sha1_hashed_passwd[i] ^ hash[i]);
+	}
+
+	return hash_out;
+}

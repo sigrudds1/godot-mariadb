@@ -1,6 +1,9 @@
-void register_mariadb_types();
-void unregister_mariadb_types();
-
+/*************************************************************************/
+/*  conversions.h                                                        */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
 /*************************************************************************/
 /* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
 /* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
@@ -25,12 +28,48 @@ void unregister_mariadb_types();
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef MARIADB_REGISTER_TYPES_H
-#define MARIADB_REGISTER_TYPES_H
+#ifndef CONVERSIONS_H
+#define CONVERSIONS_H
 
-#include "modules/register_module_types.h"
+#include <core/io/ip.h>
+#include <core/io/ip_address.h>
+#include <core/string/ustring.h>
 
-void initialize_mariadb_module(ModuleInitializationLevel p_level);
-void uninitialize_mariadb_module(ModuleInitializationLevel p_level);
+namespace {
 
-#endif // MARIADB_REGISTER_TYPES_H
+	template <typename T>
+inline T bytes_to_num_itr_pos(const uint8_t *src, const size_t byte_count, size_t &start_pos) {
+	size_t count = byte_count;
+	T result = 0;
+
+	if (sizeof(T) < byte_count)
+		count = sizeof(T);
+
+	for (size_t i = 0; i < count; ++i)
+		result |= static_cast<T>(src[++start_pos]) << (i * 8);
+	return result;
+}
+
+inline Vector<uint8_t> hex_str_to_v_bytes(const String &hex_str) {
+	Vector<uint8_t> bytes;
+	for (size_t i = 0; i < (size_t)hex_str.length(); i += 2) {
+		String byteString = hex_str.substr(i, 2);
+		uint8_t byte = (uint8_t)strtol(byteString.utf8().ptr(), NULL, 16);
+		bytes.push_back(byte);
+	}
+
+	return bytes;
+}
+
+inline Vector<uint8_t> little_endian_v_bytes(int p_value, size_t p_max_bytes) {
+	//little endian bytes
+	Vector<uint8_t> vec;
+	for (size_t i = 0; i < p_max_bytes; i++) {
+		vec.push_back((uint8_t)(p_value >> (i * 8)) & 0xff);
+	}
+
+	return vec;
+}
+
+} //namespace
+#endif // !CONVERSIONS_H

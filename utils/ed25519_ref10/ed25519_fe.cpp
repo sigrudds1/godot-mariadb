@@ -32,17 +32,17 @@
 /*************************************************************************/
 
 #include "ed25519_fe.h"
+#include <stddef.h>
 
-#include <algorithm>
-#include <cassert>
-#include <vector>
+//#include <algorithm>
+//#include <cassert>
+//#include <vector>
 
 static uint64_t bytes_to_u64(const uint8_t *src, size_t byte_count) {
 	uint64_t result = 0;
-	assert(byte_count <= 8);
 
 	for (size_t i = 0; i < byte_count; ++i)
-		result |= static_cast<uint64_t>(src[i] << (i * 8));
+		result |= static_cast<uint64_t>(src[i]) << (i * 8);
 	return result;
 }
 
@@ -332,9 +332,9 @@ void fe_invert(fe out, const fe z) {
 
 	fe_sq(t0, z);
 
-	for (i = 1; i < 1; ++i) {
-		fe_sq(t0, t0);
-	}
+	//for (i = 1; i < 1; ++i) {
+	//	fe_sq(t0, t0);
+	//}
 
 	fe_sq(t1, t0);
 
@@ -346,9 +346,9 @@ void fe_invert(fe out, const fe z) {
 	fe_mul(t0, t0, t1);
 	fe_sq(t2, t0);
 
-	for (i = 1; i < 1; ++i) {
-		fe_sq(t2, t2);
-	}
+	//for (i = 1; i < 1; ++i) {
+	//	fe_sq(t2, t2);
+	//}
 
 	fe_mul(t1, t1, t2);
 	fe_sq(t2, t1);
@@ -827,9 +827,9 @@ void fe_pow22523(fe out, const fe z) {
 	int i;
 	fe_sq(t0, z);
 
-	for (i = 1; i < 1; ++i) {
-		fe_sq(t0, t0);
-	}
+	//for (i = 1; i < 1; ++i) {
+	//	fe_sq(t0, t0);
+	//}
 
 	fe_sq(t1, t0);
 
@@ -841,9 +841,9 @@ void fe_pow22523(fe out, const fe z) {
 	fe_mul(t0, t0, t1);
 	fe_sq(t0, t0);
 
-	for (i = 1; i < 1; ++i) {
-		fe_sq(t0, t0);
-	}
+	//for (i = 1; i < 1; ++i) {
+	//	fe_sq(t0, t0);
+	//}
 
 	fe_mul(t0, t1, t0);
 	fe_sq(t1, t0);

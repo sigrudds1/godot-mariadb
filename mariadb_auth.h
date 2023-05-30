@@ -1,6 +1,9 @@
-void register_mariadb_types();
-void unregister_mariadb_types();
-
+/*************************************************************************/
+/*  authentication.h                                                     */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
 /*************************************************************************/
 /* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
 /* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
@@ -25,12 +28,15 @@ void unregister_mariadb_types();
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef MARIADB_REGISTER_TYPES_H
-#define MARIADB_REGISTER_TYPES_H
+#ifndef AUTHENTICATION_H
+#define AUTHENTICATION_H
 
-#include "modules/register_module_types.h"
+#include "core/templates/vector.h"
 
-void initialize_mariadb_module(ModuleInitializationLevel p_level);
-void uninitialize_mariadb_module(ModuleInitializationLevel p_level);
+Vector<uint8_t> get_caching_sha2_passwd_hash(Vector<uint8_t> p_sha256_hashed_passwd, Vector<uint8_t> p_srvr_salt);
 
-#endif // MARIADB_REGISTER_TYPES_H
+Vector<uint8_t> get_client_ed25519_signature(Vector<uint8_t> p_sha512_hashed_passwd, Vector<uint8_t> p_svr_msg);
+
+Vector<uint8_t> get_mysql_native_password_hash(Vector<uint8_t> p_sha1_hashed_passwd, Vector<uint8_t> p_srvr_salt);
+
+#endif // !AUTHENTICATION_H
