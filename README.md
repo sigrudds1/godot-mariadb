@@ -26,9 +26,7 @@ cd mariadb
 **Find the relevant branch to the Godot version...**  
 git branch --all  
 
-**For git version 2.23+**  
-
-**Checkout/switch to the relevant branch, e.g. 4.0... **  
+**Checkout/switch to the relevant branch, e.g. 4.0, git version 2.23+**  
 git switch -c 4.0 origin/4.0  
 
 **Change back to the main Godot directory...**  
