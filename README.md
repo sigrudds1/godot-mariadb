@@ -46,7 +46,7 @@ var db := MariaDB.new()
 var auth_ok : int = db.set_authtype(MariaDB::AuthSrc, MariaDB::AuthType, bool is_pre_hashed). returns int, 0 on success or error code  
 **If this method is not used before connect_db(), the password provided will be assumed in plain text and authorization method will be mysql_native_password.**  
 
-#### AuthSrc enum  
+#### AuthSrc enum 3.x only 
 Set with MariaDB.AUTH_SRC_...  
 1. AUTH_SRC_SCRIPT - Uses the username and password parameters in connect_db().
 2. AUTH_SRC_CONSOLE - Prompts in the console for username and password in plain text only, password is not echoed.  
