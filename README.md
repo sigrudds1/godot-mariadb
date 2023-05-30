@@ -1,15 +1,43 @@
 # godot-mariadb
-A MariaDB module for the Godot Engine, currently works on 3.5.1 but should also work on any 3.x, it does not work on 4.x, see my GitHub clone of Godot and the MariaDB branch, it was working as of BETA 6 but not sure after.
+A MariaDB module for the Godot Engine, currently works on 3.5.1 but should also work on any 3.x, checkout the 4.0 branch for Godot 4.x.
 
 This module has a self contained connector and does not use the GPL connectors from Maria/MySQL and will compile on Windows, Linux, probably Mac.  
 
-Copy to "the-godot-folder"/modules/mariadb/ and run scons, see https://docs.godotengine.org/en/stable/development/compiling/index.html.
+To compile on to a stable version you will need to clone the Godot repo...
+git clone https://github.com/godotengine/godot.git
 
--or run-
+List the stable releases with...
+git tag -l
+-or- find a major release with, eg 4.x-stable
+git tag -l '4.*stable*'
 
-git clone https://github.com/sigrudds1/godot-mariadb.git "the-godot-folder"/modules/mariadb 
+Checkout the stable release you want, in this case 4.0.3-stable...
+git checkout 4.0.3-stable
 
-I will have a tutorial up on how to compile and use this module on https://vikingtinkerer.com, once it is stable.  
+Change to the modules directory...
+cd modules
+
+Clone this repo as a git submodule...
+git submodule add https://github.com/sigrudds1/godot-mariadb.git mariadb
+
+Change to the just created mariadb directory...
+cd mariadb
+
+Find the relevant branch to the Godot version...
+git branch --all
+
+For git version 2.23+
+
+Checkout/switch to the relevant branch, e.g. 4.0...
+git switch -c 4.0 origin/4.0
+
+Change back to the main Godot directory...
+cd ../..
+
+Compile Godot, e.g. editor version for Linux 64 bit, see the Godot manual for other releases and expoprt templates...
+scons -j$(nproc) platform=linuxbsd target=editor arch=x86_64
+
+I will have a tutorial up on https://vikingtinkerer.com, once I feel it has been tested enough to be considered stable.  
 [Buy Me A Coffee](https://buymeacoffee.com/VikingTinkerer)  
 ### Use (gdscipt)  
 
