@@ -34,7 +34,7 @@ git switch -c 4.0 origin/4.0
 **Change back to the main Godot directory...**  
 cd ../..  
 
-**Compile Godot, e.g. editor version for Linux 64 bit, see the Godot manual for other releases and expoprt templates...**
+**Compile Godot, e.g. editor version for Linux 64 bit, see the Godot manual for other releases and export templates...**  
 scons -j$(nproc) platform=linuxbsd target=editor arch=x86_64
 
 I will have a tutorial up on https://vikingtinkerer.com, once I feel it has been tested enough to be considered stable.  
