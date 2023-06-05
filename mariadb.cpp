@@ -57,7 +57,8 @@ MariaDB::~MariaDB() {
 
 //Bind all your methods used in this class
 void MariaDB::_bind_methods() {
-	ClassDB::bind_method(D_METHOD("connect_db", "hostname", "port", "database", "username", "password", "authtype", "is_prehashed"), &MariaDB::connect_db);
+	ClassDB::bind_method(D_METHOD("connect_db", "hostname", "port", "database", "username", "password", "authtype", "is_prehashed"), 
+		&MariaDB::connect_db, DEFVAL(AUTH_TYPE_ED25519), DEFVAL(true));
 	ClassDB::bind_method(D_METHOD("disconnect_db"), &MariaDB::disconnect_db);
 	ClassDB::bind_method(D_METHOD("get_last_query"), &MariaDB::get_last_query);
 	ClassDB::bind_method(D_METHOD("get_last_query_converted"), &MariaDB::get_last_query_converted);

@@ -42,9 +42,10 @@ I will have a tutorial up on https://vikingtinkerer.com, once I feel it has been
 **Create the object**  
 var db := MariaDB.new()  
 
-**Set authorization source and type**  
-var auth_ok : int = db.set_authtype(MariaDB::AuthSrc, MariaDB::AuthType, bool is_pre_hashed). returns int, 0 on success or error code  
-**If this method is not used before connect_db(), the password provided will be assumed in plain text and authorization method will be mysql_native_password.**  
+**Connect to the database**  
+var connect_ok : int = db.connect_db(String hostname, int port, String db_name, String username, String password, AuthType authtype = AuthType::AUTH_TYPE_ED25519, bool is_prehashed = true).
+Used default values of authorization type is AuthType::AUTH_TYPE_ED25519 and prehashed password.
+Returns int, 0 on success or error code.  
 
 #### AuthType enum  
 Set with MariaDB.AUTH_TYPE_...  
@@ -53,10 +54,6 @@ Set with MariaDB.AUTH_TYPE_...
 
 #### is_pre_hashed  
 If set, the password entered in the connect_db() password parameter should be pre-hashed; use the hashing protocol in enum AuthType description for which type to store. This is particularly useful in autostarting daemons so the password does not need to be stored in plain text, obviously ed25519 sha512 is a more secure method of storing a password. Just keep in mind that anyone who gains access to this stored method, either directly in gdscipt or a file, could still use it to access your DB they just won't know the plain password; limit what the DB user can do or access to minimized and damages that may occur if it was obtained for nefarious purposes. Console password input is the safest of the choices available but not good or easy for autostart. Never store the DB password even in hashed form anywhere the client can gain access, Godot engine encryption is not good enough and the password will be found by hackers. This module is intended for server side only.   
-
-**Connect to the database**  
-var connect_ok : int = db.connect_db(String hostname, int port, String db_name, String username, String password).  
-Returns int, 0 on success or error code. If AuthSrc::AUTH_SRC_CONSOLE is set then username and password will be ignored and prompted in the console window, you can safely use "" for both parameters in this case.  
 
 **Check connection**  
 var db_connected : bool = db.is_connected_db()
@@ -97,7 +94,8 @@ var pba : PoolByteArray = db.get_last_response()
 Returns the vector<uint8_t> recieved from the server.
 
 #### Updates
-2023/05/30 1129 PST - Added 4.0 branch and compiling as a submodule.  
+2023/06/05 0910 PST - Fixed connect default values and updated 4.0 instructions.
+2023/05/30 1129 PST - Added 4.0 branch and compiling instructions as a submodule.  
 2021/11/16 1050 PST - Added is_connected_db() to check if still connected to db.  
 2021/11/04 2045 PST - Adopted and added to fork https://github.com/bpodrygajlo/godot-mariadb/commit/711469d32c7be60852ef05f60a9fff78129c2e09 TY Czolzen  
 >Queries will now return numeric types instead of TYPE_STRING depending on the SQL Column type;
