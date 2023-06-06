@@ -40,9 +40,12 @@ git checkout 4.x
 **Change back to the main Godot directory...**  
 cd ../..  
 
-**Compile Godot, e.g. editor version for Linux 64 bit, see the Godot manual for other releases and export templates...**  
-scons -j$(nproc) platform=linuxbsd target=editor arch=x86_64
-
+**Compile Godot, e.g. editor version Linux 64 bit, see the Godot manual for compilation instructions for other releases and export templates, make sure you're on the correct manual version.**  
+Godot 4.x  
+scons -j$(nproc) platform=linuxbsd target=editor arch=x86_64  
+Godot 3.x  
+scons -j$(nproc) platform=x11  
+  
 I will have a tutorial up on https://vikingtinkerer.com, once I feel it has been tested enough to be considered stable.  
 [Buy Me A Coffee](https://buymeacoffee.com/VikingTinkerer)  
   or  
