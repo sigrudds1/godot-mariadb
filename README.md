@@ -1,15 +1,15 @@
 # godot-mariadb
-A MariaDB module for the Godot Engine, branch updated for 4.0 and currently works on 4.0.3 but should also work on any 4.x, checkout the main branch for Godot 3.x.  
-
-This module has a self contained connector and does not use the GPL connectors from Maria/MySQL and will compile on Windows, Linux, probably Mac.  
+A Godot engine module for MariaDB that is a MIT licensed connector separate from the Maria/MySQL GPL connectors and will compile on Windows, Linux, probably Mac.  
+  
+Originally created for Godot 3.4 and currently works on 3.5.1 and 4.0.3, you will need to checkout the relevant release or branch.  
 
 **To compile on to a stable version you will need to clone the Godot repo...**  
 git clone https://github.com/godotengine/godot.git  
 
 **List the stable releases with...**  
-git tag -l  
+git tag
 **-or- find a major release with, eg 4.x-stable**  
-git tag -l '4.*stable*'  
+git tag -l '4.\*stable'  
 
 **Checkout the stable release you want, in this case 4.0.3-stable...**  
 git checkout 4.0.3-stable  
@@ -23,11 +23,17 @@ git submodule add https://github.com/sigrudds1/godot-mariadb.git mariadb
 **Change to the just created mariadb directory...**  
 cd mariadb  
 
-**Find the relevant branch to the Godot version...**  
-git branch --all  
+**Find the relevant release to the Godot version...**  
+git tag  
 
-**Checkout/switch to the relevant branch, e.g. 4.0, git version 2.23+**  
-git switch -c 4.0 origin/4.0  
+**Checkout/switch to the relevant release, e.g. match Godot 4.0.4-stable, git version 2.23+**  
+git checkout v4.0.3
+
+**Alternately you can use a branch rather than release...**  
+git branch -v -a
+
+**Checkout the branch, e.g. 4.x, git version 2.23+**  
+git checkout 4.x
 
 **Change back to the main Godot directory...**  
 cd ../..  
@@ -37,14 +43,17 @@ scons -j$(nproc) platform=linuxbsd target=editor arch=x86_64
 
 I will have a tutorial up on https://vikingtinkerer.com, once I feel it has been tested enough to be considered stable.  
 [Buy Me A Coffee](https://buymeacoffee.com/VikingTinkerer)  
+  or  
+[Buy Me A Ko-Fi](https://ko-fi.com/vikingtinkerer)  
+  
 ### Use (gdscipt)  
 
 **Create the object**  
 var db := MariaDB.new()  
 
 **Connect to the database**  
-var connect_ok : int = db.connect_db(String hostname, int port, String db_name, String username, String password, AuthType authtype = AuthType::AUTH_TYPE_ED25519, bool is_prehashed = true).
-Used default values of authorization type is AuthType::AUTH_TYPE_ED25519 and prehashed password.
+var connect_ok : int = db.connect_db(String hostname, int port, String db_name, String username, String password, AuthType authtype = AuthType::AUTH_TYPE_ED25519, bool is_prehashed = true).  
+Uses default values of authorization type and prehashed password if not set.  
 Returns int, 0 on success or error code.  
 
 #### AuthType enum  
@@ -53,7 +62,9 @@ Set with MariaDB.AUTH_TYPE_...
 2. AUTH_TYPE_ED25519 - Uses the, MariaDB only, client_ed25519 authtication plugin, see MariaDB documentation for changing/setting users, **pre-hash is sha512**.
 
 #### is_pre_hashed  
-If set, the password entered in the connect_db() password parameter should be pre-hashed; use the hashing protocol in enum AuthType description for which type to store. This is particularly useful in autostarting daemons so the password does not need to be stored in plain text, obviously ed25519 sha512 is a more secure method of storing a password. Just keep in mind that anyone who gains access to this stored method, either directly in gdscipt or a file, could still use it to access your DB they just won't know the plain password; limit what the DB user can do or access to minimized and damages that may occur if it was obtained for nefarious purposes. Console password input is the safest of the choices available but not good or easy for autostart. Never store the DB password even in hashed form anywhere the client can gain access, Godot engine encryption is not good enough and the password will be found by hackers. This module is intended for server side only.   
+If set, the password entered in the connect_db() password parameter should be pre-hashed; use the hashing protocol in enum AuthType description for which type to store. This is particularly useful in autostarting daemons so the password does not need to be stored in plain text, obviously ed25519 sha512 is a more secure method of storing a password. Just keep in mind that anyone who gains access to this stored method, either directly in gdscipt or a file, could still use it to access your DB they just won't know the plain password; limit what the DB user can do or access to minimized and damages that may occur if it was obtained for nefarious purposes.  
+Never store the DB password even in hashed form anywhere the client can gain access, Godot engine encryption is not good enough and the password will be found by hackers.  
+This module is intended for server side only.   
 
 **Check connection**  
 var db_connected : bool = db.is_connected_db()
@@ -92,16 +103,3 @@ Returns the vector<uint8_t> send to the server, this includes the protocol heade
 **Get the stream received from the DB server response**  
 var pba : PoolByteArray = db.get_last_response()  
 Returns the vector<uint8_t> recieved from the server.
-
-#### Updates
-2023/06/05 0910 PST - Fixed connect default values and updated 4.0 instructions.
-2023/05/30 1129 PST - Added 4.0 branch and compiling instructions as a submodule.  
-2021/11/16 1050 PST - Added is_connected_db() to check if still connected to db.  
-2021/11/04 2045 PST - Adopted and added to fork https://github.com/bpodrygajlo/godot-mariadb/commit/711469d32c7be60852ef05f60a9fff78129c2e09 TY Czolzen  
->Queries will now return numeric types instead of TYPE_STRING depending on the SQL Column type;
-tinyint to longlong will return TYPE_INT, float, double will return TYPE_REAL. For double there is a flag
-to set db.set_dbl2string(true|false), default false, if TYPE_STRING is preferred to help with floating point precision since
-Godot is default float precision, however, insertion is still limited unless done in C++ extension and still limited to Maria DB limitations.  
-
-2021/11/04 0245 PST - Added methods to fetch last query and messages from thw DB server.  
-
