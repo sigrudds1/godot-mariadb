@@ -9,7 +9,7 @@ Since the gdscript is different for each of the major releases, I removed the co
 git clone https://github.com/godotengine/godot.git  
 
 **List the stable releases with...**  
-git tag
+git tag  
 **-or- find a major release with, eg 4.x-stable**  
 git tag -l '4.\*stable'  
 
