@@ -11,7 +11,7 @@ git clone https://github.com/godotengine/godot.git
 **List the stable releases with...**  
 git tag
 **-or- find a major release with, eg 4.x-stable**  
-git tag -l '4.*stable*'  
+git tag -l '4.\*stable'  
 
 **Checkout the stable release you want, in this case 4.0.3-stable...**  
 git checkout 4.0.3-stable  
