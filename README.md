@@ -105,7 +105,7 @@ var pba : PoolByteArray = db.get_last_response()
 Returns the vector<uint8_t> recieved from the server.
 
 **Stream Packet Control**  
-Stream Read Delay in milliseconds, default is 1, min is 0, max is 100  
+Stream Read Delay in milliseconds, default is 0, min is 0, max is 100  
 var packet_delay_msec: int = db.get_packet_delay()  
 db.set_packet_delay(packet_delay_msec)  
 

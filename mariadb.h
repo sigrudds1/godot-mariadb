@@ -237,7 +237,7 @@ public:
 	void set_dbl2string(bool p_set_string);
 	void set_db_name(String p_dbname);
 	void set_ip_type(IpType p_type);
-	void set_packet_delay(int p_msec = 1);
+	void set_packet_delay(int p_msec = 0);
 	void set_packet_max_size(int p_size = 16384);
 	
 	//TODO(sigrudds1) Async Callbacks

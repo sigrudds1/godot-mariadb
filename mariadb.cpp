@@ -69,7 +69,7 @@ void MariaDB::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("is_connected_db"), &MariaDB::is_connected_db);
 	ClassDB::bind_method(D_METHOD("set_dbl2string", "is_str"), &MariaDB::set_dbl2string);
 	ClassDB::bind_method(D_METHOD("set_db_name", "new_name"), &MariaDB::set_db_name);
-	ClassDB::bind_method(D_METHOD("set_packet_delay", "msec"), &MariaDB::set_packet_delay, DEFVAL(1));
+	ClassDB::bind_method(D_METHOD("set_packet_delay", "msec"), &MariaDB::set_packet_delay, DEFVAL(0));
 	ClassDB::bind_method(D_METHOD("set_packet_max_size", "size"), &MariaDB::set_packet_max_size, DEFVAL(16384));
 	ClassDB::bind_method(D_METHOD("query", "qry_stmt"), &MariaDB::query);
 
