@@ -104,12 +104,12 @@ Returns the vector<uint8_t> send to the server, this includes the protocol heade
 var pba : PoolByteArray = db.get_last_response()  
 Returns the vector<uint8_t> recieved from the server.
 
-**Stream Packet Control**
-Stream Read Delay in milliseconds, default is 1, min is 0, max is 100
+**Stream Packet Control**  
+Stream Read Delay in milliseconds, default is 1, min is 0, max is 100  
 var packet_delay_msec: int = db.get_packet_delay()  
 db.set_packet_delay(packet_delay_msec)  
 
-Max Packet Size, default is 16384, min is 16, max is 0xffffff
+Max Packet Size, default is 16384, min is 16, max is 0xffffff  
 var max_packet_size: int = db.get_packet_max_size()  
 db.set_pacekt_max_size(max_packet_size)  
 
