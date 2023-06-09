@@ -48,7 +48,7 @@
 #include "core/variant/variant.h"
 
 
-constexpr int kPacketMaxSize = 0xffffff;
+constexpr int kPacketMaxSize = 16384;
 constexpr uint8_t kCharacterCollationId = 33; //utf8_general_ci
 constexpr char *kCharacterCollationName = (char *)"utf8_general_ci";
 

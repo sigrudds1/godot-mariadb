@@ -335,26 +335,35 @@ MariaDB::AuthType MariaDB::m_get_server_auth_type(String p_srvr_auth_name) {
 
 Vector<uint8_t> MariaDB::m_recv_data(uint32_t p_timeout) {
 	int byte_cnt = 0;
-	Vector<uint8_t> recv_buffer;
-	bool replied = false;
+	Vector<uint8_t> recv_buffer, out_buffer;
+	bool done = false;
 	uint64_t start_msec = OS::get_singleton()->get_ticks_msec();
 	uint64_t time_lapse = 0;
 
-	while (!replied && is_connected_db() && time_lapse < p_timeout) {
+	while (!done && is_connected_db() && time_lapse < p_timeout) {
 		_stream.poll();
 		byte_cnt = _stream.get_available_bytes();
-		if (byte_cnt > 0) {
+		while (byte_cnt > 0) {
 			start_msec = OS::get_singleton()->get_ticks_msec();
-			if (byte_cnt > kPacketMaxSize)
+			if (byte_cnt >= kPacketMaxSize)
 				byte_cnt = kPacketMaxSize;
 			recv_buffer.resize(byte_cnt);
 			_stream.get_data(recv_buffer.ptrw(), byte_cnt);
-			replied = true;
+			out_buffer.append_array(recv_buffer)
+			if (byte_cnt >= kPacketMaxSize){
+				uint64_t delay = OS::get_singleton()->get_ticks_msec() + 1;
+				while (OS::get_singleton()->get_ticks_msec() < delay) {}
+				done = false;
+			} else {
+				done = true;
+			}
+			_stream.poll();
+			byte_cnt = _stream.get_available_bytes();
 		}
 		time_lapse = OS::get_singleton()->get_ticks_msec() - start_msec;
 	}
 
-	return recv_buffer;
+	return out_buffer;
 }
 
 void MariaDB::m_handle_server_error(const Vector<uint8_t> p_src_buffer, size_t &p_last_pos) {
