@@ -64,8 +64,13 @@ void MariaDB::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_last_query_converted"), &MariaDB::get_last_query_converted);
 	ClassDB::bind_method(D_METHOD("get_last_response"), &MariaDB::get_last_response);
 	ClassDB::bind_method(D_METHOD("get_last_transmitted"), &MariaDB::get_last_transmitted);
+	ClassDB::bind_method(D_METHOD("get_packet_delay"), &MariaDB::get_packet_delay);
+	ClassDB::bind_method(D_METHOD("get_packet_max_size"), &MariaDB::get_packet_max_size);
 	ClassDB::bind_method(D_METHOD("is_connected_db"), &MariaDB::is_connected_db);
 	ClassDB::bind_method(D_METHOD("set_dbl2string", "is_str"), &MariaDB::set_dbl2string);
+	ClassDB::bind_method(D_METHOD("set_db_name", "new_name"), &MariaDB::set_db_name);
+	ClassDB::bind_method(D_METHOD("set_packet_delay", "msec"), &MariaDB::set_packet_delay, DEFVAL(1));
+	ClassDB::bind_method(D_METHOD("set_packet_max_size", "size"), &MariaDB::set_packet_max_size, DEFVAL(16384));
 	ClassDB::bind_method(D_METHOD("query", "qry_stmt"), &MariaDB::query);
 
 	BIND_ENUM_CONSTANT(IP_TYPE_IPV4);
@@ -345,14 +350,16 @@ Vector<uint8_t> MariaDB::m_recv_data(uint32_t p_timeout) {
 		byte_cnt = _stream.get_available_bytes();
 		while (byte_cnt > 0) {
 			start_msec = OS::get_singleton()->get_ticks_msec();
-			if (byte_cnt >= kPacketMaxSize)
-				byte_cnt = kPacketMaxSize;
+			if (byte_cnt >= _packet_max_size)
+				byte_cnt = _packet_max_size;
 			recv_buffer.resize(byte_cnt);
 			_stream.get_data(recv_buffer.ptrw(), byte_cnt);
 			out_buffer.append_array(recv_buffer);
-			if (byte_cnt >= kPacketMaxSize){
-				uint64_t delay = OS::get_singleton()->get_ticks_msec() + 1;
-				while (OS::get_singleton()->get_ticks_msec() < delay) {}
+			if (byte_cnt >= _packet_max_size){
+				if (_packet_msec_delay > 0){
+					uint64_t delay = OS::get_singleton()->get_ticks_msec() + _packet_msec_delay;
+					while (OS::get_singleton()->get_ticks_msec() < delay) {}
+				}
 				done = false;
 			} else {
 				done = true;
@@ -601,6 +608,14 @@ PackedByteArray MariaDB::get_last_transmitted() {
 	return _last_transmitted;
 }
 
+int MariaDB::get_packet_delay() {
+	return _packet_msec_delay;
+}
+
+void MariaDB::get_packet_max_size() {
+	return	_packet_max_size;
+}
+
 bool MariaDB::is_connected_db() {
 	_stream.poll();
 	return _stream.get_status() == StreamPeerTCP::STATUS_CONNECTED;
@@ -787,16 +802,26 @@ Variant MariaDB::query(String sql_stmt) {
 	return Variant(arr);
 }
 
-void MariaDB::update_dbname(String p_dbname) {
+void MariaDB::set_dbl2string(bool p_set_string) {
+	_dbl_to_string = p_set_string;
+}
+
+void MariaDB::set_db_name(String p_dbname) {
 	//_dbname = gdstring_to_vector<uint8_t>(p_dbname);
 	_dbname = p_dbname.to_ascii_buffer();
 	//TODO(sigrudds1) If db is not the same and connected then change db on server
 }
 
-void MariaDB::set_dbl2string(bool p_set_string) {
-	_dbl_to_string = p_set_string;
-}
-
 void MariaDB::set_ip_type(IpType p_type) {
 	_ip_type = p_type;
+}
+
+void MariaDB::set_packet_delay(int p_msec) {
+	if (p_msec >= 0 && p_msec < 100)
+		_packet_msec_delay = p_msec;
+}
+
+void MariaDB::set_packet_max_size(int p_size) {
+	if (p_size > 16 && p_size <= 0xffffff)
+		_packet_max_size = p_size;
 }

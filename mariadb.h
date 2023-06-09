@@ -48,7 +48,6 @@
 #include "core/variant/variant.h"
 
 
-constexpr int kPacketMaxSize = 16384;
 constexpr uint8_t kCharacterCollationId = 33; //utf8_general_ci
 constexpr char *kCharacterCollationName = (char *)"utf8_general_ci";
 
@@ -156,12 +155,15 @@ private:
 	Ref<StreamPeerTCP> tcp_connection;
 
 	StreamPeerTCP _stream;
+	int _packet_max_size = 16384;
+	int _packet_msec_delay = 1;
 	String _protocol_ver;
 	String _server_ver;
 	String _last_query;
 	Vector<uint8_t> _last_query_converted;
 	Vector<uint8_t> _last_transmitted;
 	Vector<uint8_t> _last_response;
+
 
 	/**
 	 * \brief			Adds the packet size and sequence number to the beginning of the packet,
@@ -208,15 +210,18 @@ public:
 	Error connect_db(String p_host, int p_port, String p_dbname, String p_username, String p_password,
 			AuthType p_authtype = AuthType::AUTH_TYPE_ED25519, bool p_is_prehashed = true);
 	void disconnect_db();
+	
 	String get_last_query();
 	PackedByteArray get_last_query_converted();
 	PackedByteArray get_last_response();
 	PackedByteArray get_last_transmitted();
+	int get_packet_delay();
+	int get_packet_max_size();
+	
 	bool is_connected_db();
 
 	Variant query(String p_sql_stmt);
 
-	void update_dbname(String p_dbname);
 
 	//TODO(sigrudds1) Implement SSL/TLS
 	//void tls_enable(bool enable);
@@ -230,7 +235,11 @@ public:
 	 * \return 				uint32_t 0 = no error, see error enum class ErrorCode
 	 */
 	void set_dbl2string(bool p_set_string);
+	void set_db_name(String p_dbname);
 	void set_ip_type(IpType p_type);
+	void set_packet_delay(int p_msec = 1);
+	void set_packet_max_size(int p_size = 16384);
+	
 	//TODO(sigrudds1) Async Callbacks
 
 	MariaDB();
