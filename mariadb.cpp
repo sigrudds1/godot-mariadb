@@ -349,7 +349,7 @@ Vector<uint8_t> MariaDB::m_recv_data(uint32_t p_timeout) {
 				byte_cnt = kPacketMaxSize;
 			recv_buffer.resize(byte_cnt);
 			_stream.get_data(recv_buffer.ptrw(), byte_cnt);
-			out_buffer.append_array(recv_buffer)
+			out_buffer.append_array(recv_buffer);
 			if (byte_cnt >= kPacketMaxSize){
 				uint64_t delay = OS::get_singleton()->get_ticks_msec() + 1;
 				while (OS::get_singleton()->get_ticks_msec() < delay) {}
