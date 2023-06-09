@@ -567,7 +567,7 @@ Error MariaDB::connect_db(String p_host, int p_port, String p_dbname, String p_u
 		ERR_PRINT("dbname not set");
 		return Error::ERR_INVALID_PARAMETER;
 	} else {
-		update_dbname(p_dbname);
+		set_db_name(p_dbname);
 	}
 
 	m_update_username(p_username);
@@ -612,7 +612,7 @@ int MariaDB::get_packet_delay() {
 	return _packet_msec_delay;
 }
 
-void MariaDB::get_packet_max_size() {
+int MariaDB::get_packet_max_size() {
 	return	_packet_max_size;
 }
 
