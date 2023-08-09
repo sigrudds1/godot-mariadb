@@ -156,7 +156,7 @@ private:
 
 	StreamPeerTCP _stream;
 	int _packet_max_size = 16384;
-	int _packet_msec_delay = 1;
+	int _packet_msec_delay = 0;
 	String _protocol_ver;
 	String _server_ver;
 	String _last_query;

@@ -341,31 +341,31 @@ MariaDB::AuthType MariaDB::m_get_server_auth_type(String p_srvr_auth_name) {
 Vector<uint8_t> MariaDB::m_recv_data(uint32_t p_timeout) {
 	int byte_cnt = 0;
 	Vector<uint8_t> recv_buffer, out_buffer;
-	bool done = false;
 	uint64_t start_msec = OS::get_singleton()->get_ticks_msec();
 	uint64_t time_lapse = 0;
+	bool data_rcvd = false;
 
-	while (!done && is_connected_db() && time_lapse < p_timeout) {
+	while (is_connected_db() && time_lapse < p_timeout) {
+		if (_packet_msec_delay > 0){
+			uint64_t delay = OS::get_singleton()->get_ticks_msec() + _packet_msec_delay;
+			while (OS::get_singleton()->get_ticks_msec() < delay) {}
+		}
 		_stream.poll();
 		byte_cnt = _stream.get_available_bytes();
-		while (byte_cnt > 0) {
+		if (byte_cnt > 0) {
+			data_rcvd = true;
 			start_msec = OS::get_singleton()->get_ticks_msec();
 			if (byte_cnt >= _packet_max_size)
 				byte_cnt = _packet_max_size;
 			recv_buffer.resize(byte_cnt);
 			_stream.get_data(recv_buffer.ptrw(), byte_cnt);
 			out_buffer.append_array(recv_buffer);
-			if (byte_cnt >= _packet_max_size){
-				if (_packet_msec_delay > 0){
-					uint64_t delay = OS::get_singleton()->get_ticks_msec() + _packet_msec_delay;
-					while (OS::get_singleton()->get_ticks_msec() < delay) {}
-				}
-				done = false;
-			} else {
-				done = true;
-			}
-			_stream.poll();
-			byte_cnt = _stream.get_available_bytes();
+		} else if(data_rcvd){
+			break;
+		}
+		if (byte_cnt >= _packet_max_size){
+			uint64_t delay = OS::get_singleton()->get_ticks_msec() + 1;
+			while (OS::get_singleton()->get_ticks_msec() < delay) {}
 		}
 		time_lapse = OS::get_singleton()->get_ticks_msec() - start_msec;
 	}
@@ -817,11 +817,11 @@ void MariaDB::set_ip_type(IpType p_type) {
 }
 
 void MariaDB::set_packet_delay(int p_msec) {
-	if (p_msec >= 0 && p_msec < 100)
+	if (p_msec > 0 && p_msec <= 100)
 		_packet_msec_delay = p_msec;
 }
 
 void MariaDB::set_packet_max_size(int p_size) {
-	if (p_size > 16 && p_size <= 0xffffff)
+	if (p_size > 128 && p_size <= 0xffffff)
 		_packet_max_size = p_size;
 }
