@@ -64,13 +64,11 @@ void MariaDB::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_last_query_converted"), &MariaDB::get_last_query_converted);
 	ClassDB::bind_method(D_METHOD("get_last_response"), &MariaDB::get_last_response);
 	ClassDB::bind_method(D_METHOD("get_last_transmitted"), &MariaDB::get_last_transmitted);
-	ClassDB::bind_method(D_METHOD("get_packet_delay"), &MariaDB::get_packet_delay);
-	ClassDB::bind_method(D_METHOD("get_packet_max_size"), &MariaDB::get_packet_max_size);
+	ClassDB::bind_method(D_METHOD("get_data_read_size"), &MariaDB::get_data_read_size);
 	ClassDB::bind_method(D_METHOD("is_connected_db"), &MariaDB::is_connected_db);
 	ClassDB::bind_method(D_METHOD("set_dbl2string", "is_str"), &MariaDB::set_dbl2string);
 	ClassDB::bind_method(D_METHOD("set_db_name", "new_name"), &MariaDB::set_db_name);
-	ClassDB::bind_method(D_METHOD("set_packet_delay", "msec"), &MariaDB::set_packet_delay, DEFVAL(0));
-	ClassDB::bind_method(D_METHOD("set_packet_max_size", "size"), &MariaDB::set_packet_max_size, DEFVAL(16384));
+	ClassDB::bind_method(D_METHOD("set_data_read_size", "size"), &MariaDB::set_data_read_size, DEFVAL(16384));
 	ClassDB::bind_method(D_METHOD("query", "qry_stmt"), &MariaDB::query);
 
 	BIND_ENUM_CONSTANT(IP_TYPE_IPV4);
@@ -276,7 +274,7 @@ Error MariaDB::m_connect(IPAddress p_ip, int p_port) {
 	Vector<uint8_t> recv_buffer = m_recv_data(250);
 	//std::cout << "recv_bfr:" << recv_buffer.size() << std::endl;
 	if (recv_buffer.size() <= 4) {
-		ERR_FAIL_V_MSG(Error::ERR_UNAVAILABLE , "Recv bfr empty!");
+		ERR_FAIL_V_MSG(Error::ERR_UNAVAILABLE , "connect: Recv bufffer empty!");
 	}
 
 	//per https://mariadb.com/kb/en/connection/
@@ -340,32 +338,39 @@ MariaDB::AuthType MariaDB::m_get_server_auth_type(String p_srvr_auth_name) {
 
 Vector<uint8_t> MariaDB::m_recv_data(uint32_t p_timeout) {
 	int byte_cnt = 0;
+	// int rcvd_bytes = 0;
 	Vector<uint8_t> recv_buffer, out_buffer;
 	uint64_t start_msec = OS::get_singleton()->get_ticks_msec();
 	uint64_t time_lapse = 0;
 	bool data_rcvd = false;
-
+	
 	while (is_connected_db() && time_lapse < p_timeout) {
-		if (_packet_msec_delay > 0){
-			uint64_t delay = OS::get_singleton()->get_ticks_msec() + _packet_msec_delay;
-			while (OS::get_singleton()->get_ticks_msec() < delay) {}
-		}
 		_stream.poll();
 		byte_cnt = _stream.get_available_bytes();
 		if (byte_cnt > 0) {
-			data_rcvd = true;
+			// print_line("byte_cnt:", byte_cnt);
+			
 			start_msec = OS::get_singleton()->get_ticks_msec();
-			if (byte_cnt >= _packet_max_size)
-				byte_cnt = _packet_max_size;
+			// if (byte_cnt >= _data_read_size) print_line("byte_cnt:", byte_cnt);
+			// 	byte_cnt = _data_read_size;
 			recv_buffer.resize(byte_cnt);
 			_stream.get_data(recv_buffer.ptrw(), byte_cnt);
+			data_rcvd = true;
+			
+			// _stream.get_partial_data(recv_buffer.ptrw(), byte_cnt, &rcvd_bytes);
+			// if (rcvd_bytes < byte_cnt) {
+				// data_rcvd = false;
+				// print_line("read parital:", rcvd_bytes, " of:", byte_cnt);
+			// }
+
 			out_buffer.append_array(recv_buffer);
+			// print_line("tcp read size:", byte_cnt, " out buffer:", out_buffer.size());
 		} else if(data_rcvd){
 			break;
 		}
-		if (byte_cnt >= _packet_max_size){
-			uint64_t delay = OS::get_singleton()->get_ticks_msec() + 1;
-			while (OS::get_singleton()->get_ticks_msec() < delay) {}
+		time_lapse = OS::get_singleton()->get_ticks_msec() - start_msec;
+		} else if(data_rcvd){
+			break;
 		}
 		time_lapse = OS::get_singleton()->get_ticks_msec() - start_msec;
 	}
@@ -608,12 +613,8 @@ PackedByteArray MariaDB::get_last_transmitted() {
 	return _last_transmitted;
 }
 
-int MariaDB::get_packet_delay() {
-	return _packet_msec_delay;
-}
-
-int MariaDB::get_packet_max_size() {
-	return	_packet_max_size;
+int MariaDB::get_data_read_size() {
+	return	_data_read_size;
 }
 
 bool MariaDB::is_connected_db() {
@@ -631,7 +632,8 @@ Variant MariaDB::query(String sql_stmt) {
 	_last_query = sql_stmt;
 	Vector<uint8_t> send_buffer_vec;
 	Vector<uint8_t> srvr_response;
-
+	size_t srvr_response_size = 0;
+	
 	size_t pkt_itr = 0;
 	size_t pkt_len; //techinically section length everything arrives in one stream packet
 	size_t len_encode = 0;
@@ -649,8 +651,11 @@ Variant MariaDB::query(String sql_stmt) {
 	_stream.put_data(send_buffer_vec.ptr(), send_buffer_vec.size());
 
 	srvr_response = m_recv_data(1000);
-
+	srvr_response_size = (size_t)srvr_response.size();
+	// TODO - Check size
+	
 	pkt_len = m_decode_pkt_len_at(srvr_response, pkt_itr);
+	// print_line(pkt_len);
 	//uint8_t seq_num = srvr_response[++pkt_itr];
 	++pkt_itr;
 
@@ -749,9 +754,12 @@ Variant MariaDB::query(String sql_stmt) {
 	}
 
 	Array arr;
-
 	//process values
-	while (!done && pkt_itr < (size_t)srvr_response.size()) {
+	while (!done && pkt_itr < srvr_response_size) {
+		if (pkt_itr + 2 >= srvr_response_size) {
+			srvr_response.append_array(m_recv_data(100));
+			srvr_response_size = (size_t)srvr_response.size();
+		}
 		pkt_len = m_decode_pkt_len_at(srvr_response, ++pkt_itr);
 		//seq_num = srvr_response[++pkt_itr];
 		++pkt_itr;
@@ -759,8 +767,16 @@ Variant MariaDB::query(String sql_stmt) {
 		Dictionary dict;
 
 		for (size_t itr = 0; itr < col_cnt; ++itr) {
+			if (pkt_itr + 1 >= srvr_response_size) {
+				srvr_response.append_array(m_recv_data(100));
+				srvr_response_size = (size_t)srvr_response.size();
+			}
 			test = srvr_response[pkt_itr + 1];
 			if (test == 0xFF) {
+				if (pkt_itr + 3 >= srvr_response_size) {
+					srvr_response.append_array(m_recv_data(100));
+					srvr_response_size = (size_t)srvr_response.size();
+				}
 				//ERR_Packet
 				int err = srvr_response[pkt_itr + 2] + (srvr_response[pkt_itr + 3] << 8);
 				m_handle_server_error(srvr_response, pkt_itr);
@@ -775,20 +791,39 @@ Variant MariaDB::query(String sql_stmt) {
 				done = true;
 			} else {
 				if (test == 0xFE) {
+					if (pkt_itr + 8 >= srvr_response_size) {
+						srvr_response.append_array(m_recv_data(100));
+						srvr_response_size = (size_t)srvr_response.size();
+					}
 					len_encode = bytes_to_num_itr_pos<uint64_t>(srvr_response.ptr(), 8, pkt_itr);
 				} else if (col_cnt == 0xFD) {
+					if (pkt_itr + 3 >= srvr_response_size) {
+						srvr_response.append_array(m_recv_data(100));
+						srvr_response_size = (size_t)srvr_response.size();
+					}
+
 					len_encode = bytes_to_num_itr_pos<uint64_t>(srvr_response.ptr(), 3, pkt_itr);
 				} else if (col_cnt == 0xFC) {
+					if (pkt_itr + 2 >= srvr_response_size) {
+						srvr_response.append_array(m_recv_data(100));
+						srvr_response_size = (size_t)srvr_response.size();
+					}
+
 					len_encode = bytes_to_num_itr_pos<uint64_t>(srvr_response.ptr(), 2, pkt_itr);
 				} else if (test == 0xFB) {
 					//null value need to skip
 					len_encode = 0;
 					++pkt_itr;
 				} else {
+					if (pkt_itr + 1 > (size_t)srvr_response.size())	srvr_response.append_array(m_recv_data(100));
 					len_encode = srvr_response[++pkt_itr];
 				}
 
 				if (len_encode > 0) {
+					if (pkt_itr + len_encode >= srvr_response_size) {
+						srvr_response.append_array(m_recv_data(100));
+						srvr_response_size = (size_t)srvr_response.size();
+					}
 					dict[col_data[itr].name] = m_get_type_data(col_data[itr].field_type,
 							m_vbytes_to_str_at(srvr_response, pkt_itr, len_encode));
 				} else {
@@ -796,6 +831,7 @@ Variant MariaDB::query(String sql_stmt) {
 				}
 			}
 		}
+		// print_line(pkt_itr, " size:", srvr_response.size());
 		if (!done)
 			arr.push_back(dict);
 	}
@@ -816,12 +852,7 @@ void MariaDB::set_ip_type(IpType p_type) {
 	_ip_type = p_type;
 }
 
-void MariaDB::set_packet_delay(int p_msec) {
-	if (p_msec > 0 && p_msec <= 100)
-		_packet_msec_delay = p_msec;
-}
-
-void MariaDB::set_packet_max_size(int p_size) {
+void MariaDB::set_data_read_size(int p_size) {
 	if (p_size > 128 && p_size <= 0xffffff)
-		_packet_max_size = p_size;
+		_data_read_size = p_size;
 }

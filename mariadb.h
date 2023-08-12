@@ -155,8 +155,7 @@ private:
 	Ref<StreamPeerTCP> tcp_connection;
 
 	StreamPeerTCP _stream;
-	int _packet_max_size = 16384;
-	int _packet_msec_delay = 0;
+	int _data_read_size = 16384;
 	String _protocol_ver;
 	String _server_ver;
 	String _last_query;
@@ -215,8 +214,7 @@ public:
 	PackedByteArray get_last_query_converted();
 	PackedByteArray get_last_response();
 	PackedByteArray get_last_transmitted();
-	int get_packet_delay();
-	int get_packet_max_size();
+	int get_data_read_size();
 	
 	bool is_connected_db();
 
@@ -237,8 +235,7 @@ public:
 	void set_dbl2string(bool p_set_string);
 	void set_db_name(String p_dbname);
 	void set_ip_type(IpType p_type);
-	void set_packet_delay(int p_msec = 0);
-	void set_packet_max_size(int p_size = 16384);
+	void set_data_read_size(int p_size = 16384);
 	
 	//TODO(sigrudds1) Async Callbacks
 
