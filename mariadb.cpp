@@ -353,22 +353,22 @@ Vector<uint8_t> MariaDB::m_recv_data(uint32_t p_timeout) {
 			start_msec = OS::get_singleton()->get_ticks_msec();
 			// if (byte_cnt >= _data_read_size) print_line("byte_cnt:", byte_cnt);
 			// 	byte_cnt = _data_read_size;
+			
 			recv_buffer.resize(byte_cnt);
 			_stream.get_data(recv_buffer.ptrw(), byte_cnt);
 			data_rcvd = true;
 			
-			// _stream.get_partial_data(recv_buffer.ptrw(), byte_cnt, &rcvd_bytes);
-			// if (rcvd_bytes < byte_cnt) {
-				// data_rcvd = false;
-				// print_line("read parital:", rcvd_bytes, " of:", byte_cnt);
+			// _stream.get_partial_data(recv_buffer.ptrw(), byte_cnt, rcvd_bytes);
+			// print_line("read parital:", rcvd_bytes, " of:", byte_cnt);
+			// if (rcvd_bytes > 0) {
+			// 	data_rcvd = false;
+				
+			// } else {
+			// 	data_rcvd = true;
 			// }
 
 			out_buffer.append_array(recv_buffer);
 			// print_line("tcp read size:", byte_cnt, " out buffer:", out_buffer.size());
-		} else if(data_rcvd){
-			break;
-		}
-		time_lapse = OS::get_singleton()->get_ticks_msec() - start_msec;
 		} else if(data_rcvd){
 			break;
 		}
