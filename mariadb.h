@@ -155,7 +155,6 @@ private:
 	Ref<StreamPeerTCP> tcp_connection;
 
 	StreamPeerTCP _stream;
-	int _data_read_size = 16384;
 	String _protocol_ver;
 	String _server_ver;
 	String _last_query;
@@ -179,7 +178,7 @@ private:
 	String m_find_vbytes_str_at(Vector<uint8_t> p_buf, size_t &p_start_pos);
 	String m_find_vbytes_str(Vector<uint8_t> p_buf);
 
-	size_t m_decode_pkt_len_at(const Vector<uint8_t> p_src_buf, size_t &p_start_pos);
+	size_t m_dec_3byte_pkt_len_at(const Vector<uint8_t> p_src_buf, size_t &p_start_pos);
 
 
 	/**
@@ -214,7 +213,6 @@ public:
 	PackedByteArray get_last_query_converted();
 	PackedByteArray get_last_response();
 	PackedByteArray get_last_transmitted();
-	int get_data_read_size();
 	
 	bool is_connected_db();
 
@@ -235,7 +233,6 @@ public:
 	void set_dbl2string(bool p_set_string);
 	void set_db_name(String p_dbname);
 	void set_ip_type(IpType p_type);
-	void set_data_read_size(int p_size = 16384);
 	
 	//TODO(sigrudds1) Async Callbacks
 
