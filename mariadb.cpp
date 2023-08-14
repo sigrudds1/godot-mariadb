@@ -618,11 +618,6 @@ PackedByteArray MariaDB::get_last_transmitted() {
 }
 
 
-int MariaDB::get_data_read_size() {
-	return	_data_read_size;
-}
-
-
 bool MariaDB::is_connected_db() {
 	_stream.poll();
 	return _stream.get_status() == StreamPeerTCP::STATUS_CONNECTED;
