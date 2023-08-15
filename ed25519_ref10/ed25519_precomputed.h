@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  precomputed_data.h                                                   */
+/*  ed25519_precomputed.h                                                   */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -30,6 +30,11 @@
 
 /* This file was derived from information found at                       */
 /* https://tools.ietf.org/html/rfc8032#page-44                           */ 
+
+#ifndef ED25519_PRECOMPUTED_H
+#define ED25519_PRECOMPUTED_H
+
+#include "ed25519_ge.h"
 
 static const ge_precomp Bi[8] = {
 	{
@@ -1421,3 +1426,5 @@ static const ge_precomp base[32][8] = {
 			},
 	},
 };
+
+#endif //!ED25519_PRECOMPUTED_H

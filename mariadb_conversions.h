@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  conversions.h                                                        */
+/*  mariadb_conversions.h                                                        */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,8 +28,8 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef CONVERSIONS_H
-#define CONVERSIONS_H
+#ifndef MARIADB_CONVERSIONS_H
+#define MARIADB_CONVERSIONS_H
 
 #include <core/io/ip.h>
 #include <core/io/ip_address.h>
@@ -72,4 +72,4 @@ inline Vector<uint8_t> little_endian_v_bytes(int p_value, size_t p_max_bytes) {
 }
 
 } //namespace
-#endif // !CONVERSIONS_H
+#endif // !MARIADB_CONVERSIONS_H

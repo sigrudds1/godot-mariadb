@@ -1,12 +1,11 @@
 Import('env')
 Import("env_modules")
 
-env.Append(CPPPATH=["#thirdparty/mbedtls/include/", "utils/", "utils/ed25519_ref10/"])
+env.Append(CPPPATH=["#thirdparty/mbedtls/include/", "ed25519_ref10/"])
 
 
 # Make includes relative to the folder path specified here so our includes are clean
 env.Prepend(CPPPATH=["#modules/mariadb/"])
 
 env.add_source_files(env.modules_sources, "*.cpp") # Add all cpp files to the build
-env.add_source_files(env.modules_sources, "utils/*.cpp") # Add all cpp files to the build
-env.add_source_files(env.modules_sources, "utils/ed25519_ref10/*.cpp") # Add all cpp files to the build
+env.add_source_files(env.modules_sources, "ed25519_ref10/*.cpp") # Add all cpp files to the build

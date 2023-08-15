@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  authentication.cpp                                                   */
+/*  mariadb_auth.cpp                                                   */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -29,7 +29,7 @@
 /*************************************************************************/
 
 #include "mariadb_auth.h"
-#include "utils/ed25519_ref10/ed25519_auth.h"
+#include "ed25519_ref10/ed25519_auth.h"
 #include <core/crypto/crypto_core.h>
 
 

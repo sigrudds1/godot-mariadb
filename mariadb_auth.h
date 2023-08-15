@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  authentication.h                                                     */
+/*  mariadb_auth.h                                                     */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,8 +28,8 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef AUTHENTICATION_H
-#define AUTHENTICATION_H
+#ifndef MARIADB_AUTH_H
+#define MARIADB_AUTH_H
 
 #include "core/templates/vector.h"
 
@@ -39,4 +39,4 @@ Vector<uint8_t> get_client_ed25519_signature(Vector<uint8_t> p_sha512_hashed_pas
 
 Vector<uint8_t> get_mysql_native_password_hash(Vector<uint8_t> p_sha1_hashed_passwd, Vector<uint8_t> p_srvr_salt);
 
-#endif // !AUTHENTICATION_H
+#endif // !MARIADB_AUTH_H

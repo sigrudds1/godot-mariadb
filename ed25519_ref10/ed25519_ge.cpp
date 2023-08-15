@@ -34,7 +34,7 @@
 #include <stdint.h>
 
 #include "ed25519_ge.h"
-#include "ed25519_precomputed_data.h"
+#include "ed25519_precomputed.h"
 
 /*
 r = p + q

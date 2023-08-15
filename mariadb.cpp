@@ -32,7 +32,7 @@
 
 #include "mariadb_auth.h"
 //#include "utils/console.h" //removed for iostream removal
-#include "conversions.h"
+#include "mariadb_conversions.h"
 //#include "utils/print_funcs.h"
 
 #include <iostream> //for std::cout Using ERR_FAIL_COND_MSG(false, msg)
