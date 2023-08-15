@@ -31,13 +31,10 @@
 #ifndef MARIADB_AUTH_H
 #define MARIADB_AUTH_H
 
-#include <stdint.h>
-#include <vector>
+#include "core/vector.h"
 
-std::vector<uint8_t> get_caching_sha2_password_hash(std::vector<uint8_t> sha256_hashed_once_password, std::vector<uint8_t> srvr_salt);
+Vector<uint8_t> get_client_ed25519_signature(Vector<uint8_t> p_sha512_hashed_once_password, Vector<uint8_t> p_svr_msg);
 
-std::vector<uint8_t> get_client_ed25519_signature(std::vector<uint8_t> sha512_hashed_once_password, std::vector<uint8_t> svr_msg);
-
-std::vector<uint8_t> get_mysql_native_password_hash(std::vector<uint8_t> sha1_hashed_once_password, std::vector<uint8_t> srvr_salt);
+Vector<uint8_t> get_mysql_native_password_hash(Vector<uint8_t> p_sha1_hashed_once_password, Vector<uint8_t> p_srvr_salt);
 
 #endif // !MARIADB_AUTH_H

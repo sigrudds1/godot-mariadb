@@ -41,17 +41,42 @@
 #include <cstdlib>
 #include <vector>
 
-IP_Address resolve_host(String hostname, IP::Type type);
+// IP_Address resolve_host(const String hostname, const IP::Type type);
+// String vbytes_to_str_at_idx(const Vector<uint8_t> &p_src_buf, size_t &p_last_pos, size_t p_byte_cnt);
 
-template <typename T>
-T bytes_to_num_itr(const uint8_t *src, const size_t byte_count, size_t &start_pos) {
-	size_t count = byte_count;
+inline IP_Address resolve_host(const String hostname, const IP::Type type) {
+	IP_Address ip;
+	if (hostname.is_valid_ip_address()) {
+		ip = hostname;
+	} else {
+		ip = IP::get_singleton()->resolve_hostname(hostname, type);
+	}
+	return ip;
+}
+
+
+inline String vbytes_to_str_at_idx(const Vector<uint8_t> &p_src_buf, int &p_last_pos, const int p_byte_cnt){
+	String rtn;
+	for (int itr = 0; itr < p_byte_cnt; ++itr)
+		rtn += p_src_buf[++p_last_pos];
+
+	return rtn;
+}
+
+inline PoolByteArray vbytes_to_pba(const Vector<uint8_t> v){
+	PoolByteArray pba;
+	return pba;
+}
+
+	template <typename T>
+T bytes_to_num_itr_pos(const uint8_t *src, const int byte_count, int &start_pos) {
+	int count = byte_count;
 	T result = 0;
 
-	if (sizeof(T) < byte_count)
-		count = sizeof(T);
+	if ((int)sizeof(T) < byte_count)
+		count = (int)sizeof(T);
 
-	for (size_t i = 0; i < count; ++i)
+	for (int i = 0; i < count; ++i)
 		result |= static_cast<T>(src[++start_pos] << (i * 8));
 	return result;
 }
@@ -62,10 +87,10 @@ uint8_t *cast_to_uint8_t(const T *ptr) {
 }
 
 template <typename T>
-std::vector<T> gdstring_to_vector(String string) {
+Vector<T> gdstring_to_vector(const String string) {
 	//T *t = (T *)string.utf8().ptrw(); //breaks after 530ish characters corrupting the end
-	//std::vector<T> vec(t, t + string.length());
-	std::vector<T> vec;
+	//Vector<T> vec(t, t + string.length());
+	Vector<T> vec;
 	for (int i = 0; i < string.length(); i++) {
 		vec.push_back(string[i]);
 	}
@@ -73,9 +98,9 @@ std::vector<T> gdstring_to_vector(String string) {
 }
 
 template <typename T>
-std::vector<T> gd_hexstring_to_vector(const String &hex) {
-	std::vector<T> bytes;
-	for (size_t i = 0; i < (size_t)hex.length(); i += 2) {
+Vector<T> gd_hexstring_to_vector(const String &hex) {
+	Vector<T> bytes;
+	for (int i = 0; i < (int)hex.length(); i += 2) {
 		String byteString = hex.substr(i, 2);
 		T byte = (T)strtol(byteString.utf8().ptrw(), NULL, 16);
 		bytes.push_back(byte);
@@ -84,14 +109,16 @@ std::vector<T> gd_hexstring_to_vector(const String &hex) {
 	return bytes;
 }
 
-template <typename T>
-std::vector<uint8_t> value_to_bytestream_vec(T value, size_t stream_bytes) {
-	std::vector<uint8_t> vec;
-	for (size_t i = 0; i < stream_bytes; i++) {
-		vec.push_back((uint8_t)(value >> (i * 8)) & 0xff);
+
+inline Vector<uint8_t> le_vector_bytes(const int p_value, const int p_max_bytes) {
+	//little endian bytes
+	Vector<uint8_t> vec;
+	for (int i = 0; i < p_max_bytes; i++) {
+		vec.push_back((uint8_t)(p_value >> (i * 8)) & 0xff);
 	}
 
 	return vec;
 }
+
 
 #endif // !MARIADB_CONVERSIONS_H

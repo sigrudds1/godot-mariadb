@@ -40,8 +40,6 @@
 
 #define DEBUG_OUTPUT
 
-#include <vector>
-
 #include <core/io/ip.h>
 #include <core/io/ip_address.h>
 #include <core/io/stream_peer_tcp.h>
@@ -106,7 +104,7 @@ private:
 		ODBC = (1UL << 6), //not used in Maria
 		LOCAL_FILES = (1UL << 7),
 		IGNORE_SPACE = (1UL << 8),
-		PROTOCOL_41 = (1UL << 9),
+		CLIENT_PROTOCOL_41 = (1UL << 9),
 		INTERACTIVE = (1UL << 10),
 		SSL = (1UL << 11),
 		IGNORE_SIGPIPE = (1UL << 12), //mysql
@@ -123,7 +121,7 @@ private:
 		PLUGIN_AUTH_LENENC_CLIENT_DATA = (1UL << 21),
 		CAN_HANDLE_EXPIRED_PASSWORDS = (1UL << 22), //not used in Maria
 		SESSION_TRACK = (1UL << 23),
-		DEPRECATE_EOF = (1UL << 24),
+		CLIENT_DEPRECATE_EOF = (1UL << 24),
 		OPTIONAL_RESULTSET_METADATA = (1UL << 25),
 		ZSTD_COMPRESSION_ALGORITHM = (1UL << 26),
 		CLIENT_QUERY_ATTRIBUTES = (1UL << 27), //not used in Maria
@@ -147,77 +145,78 @@ private:
 		uint8_t field_type;
 	};
 
-	const std::vector<String> kAuthTypeServerNames = { "unknown", "mysql_native_password", "client_ed25519" };
+	const Vector<String> kAuthTypeServerNames = String("unknownmysql_native_password,client_ed25519").split(",");
 	bool dbl_to_string_ = false;
 	IpType ip_type_ = IpType::IP_TYPE_ANY;
 	AuthSrc auth_src_ = AUTH_SRC_UNKNOWN;
-	AuthType client_auth_type_ = AUTH_TYPE_UNKNOWN;
-	bool is_pre_hashed_ = false;
-	bool authenticated_ = false;
-	uint32_t client_capabilities_ = 0;
+	AuthType _client_auth_type  = AUTH_TYPE_UNKNOWN;
+	bool _is_pre_hashed = false;
+	bool _authenticated = false;
+	uint32_t _client_capabilities = 0;
 	uint32_t client_extended_capabilities_ = 0;
-	uint32_t server_capabilities_ = 0;
+	uint32_t _server_capabilities = 0;
 	uint32_t server_extended_capabilities_ = 0;
 	uint32_t error_ = 0;
 	bool is_mysql_ = false;
 	bool tls_enabled_ = false;
 
-	std::vector<uint8_t> username_;
-	std::vector<uint8_t> password_hashed_;
-	std::vector<uint8_t> dbname_;
+	Vector<uint8_t> username_;
+	Vector<uint8_t> _password_hashed;
+	Vector<uint8_t> _dbname;
 
-	StreamPeerTCP stream_;
-	String server_version_;
-	String last_query_;
-	PoolByteArray last_query_converted_;
-	PoolByteArray last_transmitted_;
-	PoolByteArray last_response_;
+	StreamPeerTCP _stream;
+	String _server_ver;
+	String _last_query;
+	
+	Vector<uint8_t> _last_transmitted;
+	Vector<uint8_t> _last_response;
 
 	/**
 	 * \brief			Adds the packet size and sequence number to the beginning of the packet,
 	 *					it must be used once just before sending stream to server.
-	 * \param stream	std::vector<uint8_t> the stream to be modified.
+	 * \param stream	Vector<uint8_t> the stream to be modified.
 	 * \param sequance	int
 	 */
-	void m_add_packet_header(std::vector<uint8_t> &stream, int sequence);
-	void m_client_protocol_v41(const AuthType srvr_auth_type, const std::vector<uint8_t> srvr_salt);
+	void m_add_packet_header(Vector<uint8_t> &p_pkt, uint8_t p_pkt_seq);
+	void m_client_protocol_v41(const AuthType srvr_auth_type, const Vector<uint8_t> srvr_salt);
 	void m_connect(IP_Address ip, int port);
+	int m_dec_3byte_pkt_len_at(const Vector<uint8_t> p_src_buf, int &p_start_pos);
 
-	Variant m_get_gd_type_data(int db_field_type, const char *data);
+	Variant m_get_gd_type_data(const int db_field_type, const String data);
 
-	String m_get_gdstring_from_buf(std::vector<uint8_t> buf, size_t &start_pos);
-	String m_get_gdstring_from_buf(std::vector<uint8_t> buf);
+	String m_get_gdstring_from_buf(Vector<uint8_t> buf, int &start_pos);
+	String m_get_gdstring_from_buf(Vector<uint8_t> buf);
 
-	size_t m_get_packet_length(const std::vector<uint8_t> src_buf, size_t &start_pos);
+	int m_get_packet_length(const Vector<uint8_t> src_buf, int &start_pos);
 
 	/**
 	 * \brief			This method returns the defined hash from the combined and scrambled password_hash_ member.
 	 *
 	 * \param auth_type	enum class AuthType determines what hash is returned from the combined and scrambed hash.
-	 * \return			std::vector<uint8_t>.
+	 * \return			Vector<uint8_t>.
 	 */
-	std::vector<uint8_t> m_get_password_hash(const AuthType authtype);
+	Vector<uint8_t> m_get_password_hash(const AuthType authtype);
 
 	/**
 	 * \brief			This method returns a string from packets using length encoding.
 	 *
-	 * \param src_buf	const std::vector<uint8_t> packet buffer.
-	 * \param last_pos	size_t packet buffer position iterator of the last position used,
+	 * \param src_buf	const Vector<uint8_t> packet buffer.
+	 * \param last_pos	int packet buffer position iterator of the last position used,
 	 *					this will be incremented on first use upto byte count.
-	 * \param byte_cnt	size_t byte count to be copied from the packet buffer.
+	 * \param byte_cnt	int byte count to be copied from the packet buffer.
 	 * \return			std::string.
 	 */
-	std::string m_get_packet_string(const std::vector<uint8_t> &src_buf, size_t &last_pos, size_t byte_cnt);
+	String m_get_packet_string(const Vector<uint8_t> &src_buf, int &last_pos, const int byte_cnt);
 
 	AuthType m_get_server_auth_type(String srvr_auth_name);
 
-	std::vector<uint8_t> m_recv_data(uint32_t timeout);
+	Vector<uint8_t> m_recv_data(int timeout);
 	//TODO(sigrudds1) Add error log file using the username in the filename
-	void m_handle_server_error(const std::vector<uint8_t> src_buffer, size_t &last_pos);
-	void m_server_init_handshake_v10(const std::vector<uint8_t> &src_buffer);
+	void m_handle_server_error(const Vector<uint8_t> src_buffer, int &last_pos);
+	void m_server_init_handshake_v10(const Vector<uint8_t> &p_src_buffer);
 	void m_update_password(String password);
 	void m_update_username(String username);
-	PoolByteArray m_vector_byte_to_pool_byte(std::vector<uint8_t> vec);
+	PoolByteArray m_vector_byte_to_pool_byte(Vector<uint8_t> vec);
 
 protected:
 	static void _bind_methods();
@@ -225,10 +224,6 @@ protected:
 public:
 	uint32_t connect_db(String hostname, int port, String dbname, String username = "", String password = "");
 	void disconnect_db();
-	String get_last_query();
-	PoolByteArray get_last_query_converted();
-	PoolByteArray get_last_response();
-	PoolByteArray get_last_transmitted();
 	bool is_connected_db();
 
 	Variant query(String sql_stmt);
