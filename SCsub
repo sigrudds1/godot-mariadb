@@ -1,7 +1,7 @@
 Import('env')
 Import("env_modules")
 
-env.Append(CPPPATH=["#thirdparty/mbedtls/include/", "utils/", "utils/ed25519_ref10/"])
+env.Append(CPPPATH=["#thirdparty/mbedtls/include/", "ed25519_ref10/"])
 
 
 # Make includes relative to the folder path specified here so our includes are clean

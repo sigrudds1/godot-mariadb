@@ -145,11 +145,11 @@ private:
 		uint8_t field_type;
 	};
 
-	const Vector<String> kAuthTypeServerNames = String("unknownmysql_native_password,client_ed25519").split(",");
+	const Vector<String> kAuthTypeServerNames = String("unknown,mysql_native_password,client_ed25519").split(",");
 	bool dbl_to_string_ = false;
 	IpType ip_type_ = IpType::IP_TYPE_ANY;
 	AuthSrc auth_src_ = AUTH_SRC_UNKNOWN;
-	AuthType _client_auth_type  = AUTH_TYPE_UNKNOWN;
+	AuthType _client_auth_type  = AUTH_TYPE_ED25519;
 	bool _is_pre_hashed = false;
 	bool _authenticated = false;
 	uint32_t _client_capabilities = 0;
@@ -216,13 +216,12 @@ private:
 	void m_server_init_handshake_v10(const Vector<uint8_t> &p_src_buffer);
 	void m_update_password(String password);
 	void m_update_username(String username);
-	PoolByteArray m_vector_byte_to_pool_byte(Vector<uint8_t> vec);
 
 protected:
 	static void _bind_methods();
 
 public:
-	uint32_t connect_db(String hostname, int port, String dbname, String username = "", String password = "");
+	int connect_db(String p_hostname, int p_port, String p_dbname, String p_username, String p_password);
 	void disconnect_db();
 	bool is_connected_db();
 

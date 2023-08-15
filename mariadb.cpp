@@ -29,13 +29,6 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-/*TODO(Sigrud) Add debug buffer to be fetched wtih methods
- *	Last query statment
- *	Last output to server
- *	Last response string from server
- *	Turn on outputs
- */
-
 #include "mariadb.h"
 
 #include "mariadb_auth.h"
@@ -541,16 +534,16 @@ void MariaDB::m_update_username(String username) {
 }
 
 //public
-uint32_t MariaDB::connect_db(String hostname, int port, String dbname, String username, String password) {
+int MariaDB::connect_db(String p_hostname, int p_port, String p_dbname, String p_username, String p_password) {
 	if (_stream.is_connected_to_host()) {
 		disconnect_db();
 	}
 
-	IP_Address ip = resolve_host(hostname, (IP::Type)ip_type_);
+	IP_Address ip = resolve_host(p_hostname, (IP::Type)ip_type_);
 	//std::cout << (ip.is_ipv4() ? "ipv4" : "ipv6") << std::endl;
 
-	if (dbname.length() > 0) {
-		update_dbname(dbname);
+	if (p_dbname.length() > 0) {
+		update_dbname(p_dbname);
 	} else {
 		return (int)ERR_DB_EMPTY;
 	}
@@ -563,18 +556,18 @@ uint32_t MariaDB::connect_db(String hostname, int port, String dbname, String us
 	}
 
 	if (auth_src_ == AUTH_SRC_SCRIPT) {
-		if (username.length() <= 0)
+		if (p_username.length() <= 0)
 			return (int)ERR_USERNAME_EMPTY;
 
-		if (password.length() <= 0)
+		if (p_password.length() <= 0)
 			return (int)ERR_PASSWORD_EMPTY;
 
-		m_update_username(username);
+		m_update_username(p_username);
 
 		if (_is_pre_hashed ) {
-			_password_hashed = gd_hexstring_to_vector<uint8_t>(password);
+			_password_hashed = gd_hexstring_to_vector<uint8_t>(p_password);
 		} else {
-			m_update_password(password);
+			m_update_password(p_password);
 		}
 	}
 
@@ -583,7 +576,7 @@ uint32_t MariaDB::connect_db(String hostname, int port, String dbname, String us
 	if (_password_hashed.size() <= 0)
 		return (int)ERR_PASSWORD_EMPTY;
 
-	m_connect(ip, port);
+	m_connect(ip, p_port);
 	return error_;
 }
 
