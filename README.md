@@ -53,14 +53,9 @@ I will have a tutorial up on https://vikingtinkerer.com, once I feel it has been
 **Create the object**  
 var db := MariaDB.new()  
 
-**Set authorization source and type**  
-var auth_ok : int = db.set_authtype(MariaDB::AuthSrc, MariaDB::AuthType, bool is_pre_hashed). returns int, 0 on success or error code  
-**If this method is not used before connect_db(), the password provided will be assumed in plain text and authorization method will be mysql_native_password.**  
-
-#### AuthSrc enum (3.x only)  
-Set with MariaDB.AUTH_SRC_...  
-1. AUTH_SRC_SCRIPT - Uses the username and password parameters in connect_db().
-2. AUTH_SRC_CONSOLE - Prompts in the console for username and password in plain text only, password is not echoed.  
+**Set authorization type**  
+var auth_ok : int = db.set_authtype(MariaDB::AuthType, bool is_pre_hashed). returns int, 0 on success or error code  
+**If this method is not used before connect_db(), Defaults are auth_type = AUTH_TYPE_ED25519, is_prehashed = true**  
 
 #### AuthType enum  
 Set with MariaDB.AUTH_TYPE_...  
@@ -94,20 +89,4 @@ There are known issues with MariaDB and IPv6 where it doesn't respond to localho
 Set with MariaDB.IP_TYPE_...  
 1. IP_TYPE_IPV4  
 2. IP_TYPE_IPV6  
-3. IP_TYPE_ANY
-
-**Get the last query statement**  
-var last_qry : String = db.get_last_query()  
-Returns the String used in the query, this was implemented to troublehsoot characterset issues.  
-  
-**Get the last query statement converted to uint8_t**  
-var pba : PoolByteArray = db.get_last_query_converted()    
-Returns the vector<uint8_t> as PoolByteArray used in the query just before transmitting to the server, this was implemented to troublehsoot characterset issues.  
-
-**Get the stream send to the DB server**  
-var pba : PoolByteArray = db.get_last_transmitted()  
-Returns the vector<uint8_t> send to the server, this includes the protocol header.  
-  
-**Get the stream received from the DB server response**  
-var pba : PoolByteArray = db.get_last_response()  
-Returns the vector<uint8_t> recieved from the server.  
+3. IP_TYPE_ANY  
