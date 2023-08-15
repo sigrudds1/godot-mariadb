@@ -55,13 +55,6 @@ class MariaDB : public Reference {
 	GDCLASS(MariaDB, Reference);
 
 public:
-	enum AuthSrc {
-		AUTH_SRC_UNKNOWN,
-		AUTH_SRC_SCRIPT,
-		AUTH_SRC_CONSOLE,
-		AUTH_SRC_LAST,
-	};
-
 	enum AuthType {
 		AUTH_TYPE_UNKNOWN,
 		AUTH_TYPE_MYSQL_NATIVE,
@@ -148,7 +141,6 @@ private:
 	const Vector<String> kAuthTypeServerNames = String("unknown,mysql_native_password,client_ed25519").split(",");
 	bool dbl_to_string_ = false;
 	IpType ip_type_ = IpType::IP_TYPE_ANY;
-	AuthSrc auth_src_ = AUTH_SRC_UNKNOWN;
 	AuthType _client_auth_type  = AUTH_TYPE_ED25519;
 	bool _is_pre_hashed = false;
 	bool _authenticated = false;
@@ -160,7 +152,7 @@ private:
 	bool is_mysql_ = false;
 	bool tls_enabled_ = false;
 
-	Vector<uint8_t> username_;
+	Vector<uint8_t> _username;
 	Vector<uint8_t> _password_hashed;
 	Vector<uint8_t> _dbname;
 
@@ -215,7 +207,6 @@ private:
 	void m_handle_server_error(const Vector<uint8_t> src_buffer, int &last_pos);
 	void m_server_init_handshake_v10(const Vector<uint8_t> &p_src_buffer);
 	void m_update_password(String password);
-	void m_update_username(String username);
 
 protected:
 	static void _bind_methods();
@@ -240,7 +231,7 @@ public:
 	 * \param is_pre_hash	bool if set the password used will be hashed by the required type before used.
 	 * \return 				uint32_t 0 = no error, see error enum class ErrorCode
 	 */
-	uint32_t set_authtype(AuthSrc auth_src, AuthType auth_type, bool is_pre_hashed = true);
+	int set_authtype(AuthType auth_type, bool is_pre_hashed);
 	void set_dbl2string(bool set_string);
 	void set_ip_type(IpType type);
 	//TODO(sigrudds1) Async Callbacks
@@ -249,7 +240,6 @@ public:
 	~MariaDB();
 };
 
-VARIANT_ENUM_CAST(MariaDB::AuthSrc);
 VARIANT_ENUM_CAST(MariaDB::AuthType);
 VARIANT_ENUM_CAST(MariaDB::IpType);
 VARIANT_ENUM_CAST(MariaDB::ErrorCodes);

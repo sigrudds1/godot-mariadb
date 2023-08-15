@@ -59,7 +59,7 @@ void MariaDB::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("connect_db", "hostname", "port", "database", "username", "password"), &MariaDB::connect_db);
 	ClassDB::bind_method(D_METHOD("disconnect_db"), &MariaDB::disconnect_db);
 	ClassDB::bind_method(D_METHOD("is_connected_db"), &MariaDB::is_connected_db);
-	ClassDB::bind_method(D_METHOD("set_authtype", "auth_src", "auth_type", "is_pre_hashed"), &MariaDB::set_authtype);
+	ClassDB::bind_method(D_METHOD("set_authtype", "auth_type", "is_pre_hashed"), &MariaDB::set_authtype);
 	ClassDB::bind_method(D_METHOD("set_dbl2string", "is_str"), &MariaDB::set_dbl2string);
 	ClassDB::bind_method(D_METHOD("set_ip_type", "type"), &MariaDB::set_ip_type);
 	ClassDB::bind_method(D_METHOD("query", "qry_stmt"), &MariaDB::query);
@@ -67,10 +67,6 @@ void MariaDB::_bind_methods() {
 	BIND_ENUM_CONSTANT(IP_TYPE_IPV4);
 	BIND_ENUM_CONSTANT(IP_TYPE_IPV6);
 	BIND_ENUM_CONSTANT(IP_TYPE_ANY);
-
-	BIND_ENUM_CONSTANT(AUTH_SRC_UNKNOWN);
-	BIND_ENUM_CONSTANT(AUTH_SRC_SCRIPT);
-	BIND_ENUM_CONSTANT(AUTH_SRC_CONSOLE);
 
 	BIND_ENUM_CONSTANT(AUTH_TYPE_UNKNOWN);
 	BIND_ENUM_CONSTANT(AUTH_TYPE_MYSQL_NATIVE);
@@ -165,7 +161,7 @@ void MariaDB::m_client_protocol_v41(const AuthType srvr_auth_type, const Vector<
 	send_buffer_vec.append_array(temp_vec);
 
 	//string<NUL> username
-	send_buffer_vec.append_array(username_);
+	send_buffer_vec.append_array(_username);
 	send_buffer_vec.push_back(0); //NUL terminated
 
 	if (srvr_auth_type == AUTH_TYPE_MYSQL_NATIVE && (_client_auth_type  == AUTH_TYPE_MYSQL_NATIVE))
@@ -529,9 +525,6 @@ void MariaDB::m_update_password(String p_password) {
 	//TODO(sigrudds1) mysql caching_sha2_password
 }
 
-void MariaDB::m_update_username(String username) {
-	username_ = gdstring_to_vector<uint8_t>(username);
-}
 
 //public
 int MariaDB::connect_db(String p_hostname, int p_port, String p_dbname, String p_username, String p_password) {
@@ -548,30 +541,16 @@ int MariaDB::connect_db(String p_hostname, int p_port, String p_dbname, String p
 		return (int)ERR_DB_EMPTY;
 	}
 
-	if (auth_src_ == AUTH_SRC_UNKNOWN || _client_auth_type  == AUTH_TYPE_UNKNOWN) {
+	if (_client_auth_type  == AUTH_TYPE_UNKNOWN) {
 		//assume via script, mysql_native_password and plain password
-		auth_src_ = AUTH_SRC_SCRIPT;
 		_client_auth_type  = AUTH_TYPE_MYSQL_NATIVE;
 		_is_pre_hashed  = false;
 	}
 
-	if (auth_src_ == AUTH_SRC_SCRIPT) {
-		if (p_username.length() <= 0)
-			return (int)ERR_USERNAME_EMPTY;
+	_username = gdstring_to_vector<uint8_t>(p_username);
+	_password_hashed = gd_hexstring_to_vector<uint8_t>(p_password);
 
-		if (p_password.length() <= 0)
-			return (int)ERR_PASSWORD_EMPTY;
-
-		m_update_username(p_username);
-
-		if (_is_pre_hashed ) {
-			_password_hashed = gd_hexstring_to_vector<uint8_t>(p_password);
-		} else {
-			m_update_password(p_password);
-		}
-	}
-
-	if (username_.size() <= 0)
+	if (_username.size() <= 0)
 		return (int)ERR_USERNAME_EMPTY;
 	if (_password_hashed.size() <= 0)
 		return (int)ERR_PASSWORD_EMPTY;
@@ -791,12 +770,9 @@ void MariaDB::update_dbname(String dbname) {
 	//TODO(sigrudds1) If db is not the same and connected then change db on server
 }
 
-uint32_t MariaDB::set_authtype(AuthSrc p_auth_src, AuthType p_auth_type, bool p_is_pre_hashed) {
-	auth_src_ = p_auth_src;
-	_client_auth_type  = p_auth_type;
+int MariaDB::set_authtype(AuthType auth_type, bool p_is_pre_hashed) {
 	_is_pre_hashed  = p_is_pre_hashed;
-
-	return (uint32_t)ERR_NO_ERROR;
+	return (int)ERR_NO_ERROR;
 }
 
 void MariaDB::set_dbl2string(bool set_string) {
