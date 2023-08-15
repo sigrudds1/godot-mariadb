@@ -38,10 +38,8 @@
 
 #include "mariadb.h"
 
-#include "utils/authentication.h"
-#include "utils/console.h"
-#include "utils/conversions.h"
-#include "utils/print_funcs.h"
+#include "mariadb_auth.h"
+#include "mariadb_conversions.h"
 
 #include <iostream> //for std::cout
 //#include <ios>
@@ -363,16 +361,13 @@ std::vector<uint8_t> MariaDB::m_recv_data(uint32_t timeout) {
 	return return_vec;
 }
 
-void MariaDB::m_print_error(std::string error) {
-	std::cout << error << std::endl;
-}
 
 void MariaDB::m_handle_server_error(const std::vector<uint8_t> src_buffer, size_t &last_pos) {
 	//REF https://mariadb.com/kb/en/err_packet/
 	uint16_t srvr_error_code = (uint16_t)src_buffer[++last_pos];
 	srvr_error_code += (uint16_t)src_buffer[++last_pos] << 8;
-	std::string msg = "Error Code:";
-	msg += std::to_string((uint32_t)srvr_error_code);
+	String msg = "Error Code:";
+	msg += srvr_error_code;
 	if (srvr_error_code == 0xFFFF) {
 		//int<1> stage
 		//int<1> max_stage
@@ -395,7 +390,7 @@ void MariaDB::m_handle_server_error(const std::vector<uint8_t> src_buffer, size_
 			}
 		}
 	}
-	m_print_error(msg);
+	print_line(msg);
 }
 
 String MariaDB::m_get_gdstring_from_buf(std::vector<uint8_t> buf) {
@@ -852,33 +847,10 @@ void MariaDB::update_dbname(String dbname) {
 	//TODO(sigrudds1) If db is not the same and connected then change db on server
 }
 
-uint32_t MariaDB::set_authtype(AuthSrc auth_src, AuthType auth_type, bool is_pre_hashed) {
-	if (auth_src <= AUTH_SRC_UNKNOWN || auth_src >= AUTH_SRC_LAST) {
-		std::cout << "MariaDB authentication source not set!" << std::endl;
-		return (uint32_t)ERR_AUTH_PLUGIN_NOT_SET;
-	}
-
-	if (auth_type <= AUTH_TYPE_UNKNOWN || auth_type >= AUTH_TYPE_LAST) {
-		std::cout << "MariaDB authentication type not set!" << std::endl;
-		return (uint32_t)ERR_AUTH_PLUGIN_NOT_SET;
-	}
-
-	auth_src_ = auth_src;
-	client_auth_type_ = auth_type;
-	is_pre_hashed_ = is_pre_hashed;
-	if (auth_src == AUTH_SRC_CONSOLE) {
-		is_pre_hashed_ = false;
-		std::cout << "MariaDB Console Authentication Enabled" << std::endl;
-		std::cout << "Username:";
-		String username = get_gdstring_from_console(true, 10000);
-
-		std::cout << "Password:";
-		String password = get_gdstring_from_console(false, 10000);
-		std::cout << std::endl;
-
-		m_update_username(username);
-		m_update_password(password);
-	}
+uint32_t MariaDB::set_authtype(AuthSrc p_auth_src, AuthType p_auth_type, bool p_is_pre_hashed) {
+	auth_src_ = p_auth_src;
+	client_auth_type_ = p_auth_type;
+	is_pre_hashed_ = p_is_pre_hashed;
 
 	return (uint32_t)ERR_NO_ERROR;
 }

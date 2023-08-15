@@ -1,13 +1,11 @@
 /*************************************************************************/
-/*  auth_ed25519.h                                                   */
+/*  mariadb_auth.h                                                        */
 /*************************************************************************/
 /*                     This file is part of the                          */
 /*             Maria and Mysql database connection module                */
 /*                    for use in the Godot Engine                        */
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
-/* This file was derived from information found at                       */
-/* https://tools.ietf.org/html/rfc8032#page-44                           */
 /*************************************************************************/
 /* Copyright (c) 2021 Shawn Shipton. https://vikingtinkerer.com          */
 /*                                                                       */
@@ -30,17 +28,16 @@
 /* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
+#ifndef MARIADB_AUTH_H
+#define MARIADB_AUTH_H
 
-#ifndef AUTH_ED25519_H
-#define AUTH_ED25519_H
-
-#include <stddef.h>
 #include <stdint.h>
+#include <vector>
 
-//REF https://security.stackexchange.com/questions/218046/how-does-mariadbs-ed25519-auth-scheme-work
+std::vector<uint8_t> get_caching_sha2_password_hash(std::vector<uint8_t> sha256_hashed_once_password, std::vector<uint8_t> srvr_salt);
 
-void ed25519_sign_msg(const uint8_t *pwd_sha512_src, const uint8_t *message_src, size_t message_len, uint8_t *signature_dst);
-void ed25519_create_keypair(const uint8_t *pwd_sha512_src, uint8_t *private_key_dst, uint8_t *public_key_dst);
-void ed25519_sign(const uint8_t *message_src, size_t message_len, const uint8_t *public_key_src, const uint8_t *private_key_src, uint8_t *signature_dst);
+std::vector<uint8_t> get_client_ed25519_signature(std::vector<uint8_t> sha512_hashed_once_password, std::vector<uint8_t> svr_msg);
 
-#endif // !AUTH_ED25519_H
+std::vector<uint8_t> get_mysql_native_password_hash(std::vector<uint8_t> sha1_hashed_once_password, std::vector<uint8_t> srvr_salt);
+
+#endif // !MARIADB_AUTH_H

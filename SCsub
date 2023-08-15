@@ -8,5 +8,4 @@ env.Append(CPPPATH=["#thirdparty/mbedtls/include/", "utils/", "utils/ed25519_ref
 env.Prepend(CPPPATH=["#modules/mariadb/"])
 
 env.add_source_files(env.modules_sources, "*.cpp") # Add all cpp files to the build
-env.add_source_files(env.modules_sources, "utils/*.cpp") # Add all cpp files to the build
-env.add_source_files(env.modules_sources, "utils/ed25519_ref10/*.cpp") # Add all cpp files to the build
+env.add_source_files(env.modules_sources, "ed25519_ref10/*.cpp") # Add all cpp files to the build

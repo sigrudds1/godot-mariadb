@@ -33,7 +33,7 @@
 
 #include "ed25519_ge.h"
 
-#include "precomputed_data.h"
+#include "ed25519_precomputed.h"
 
 /*
 r = p + q

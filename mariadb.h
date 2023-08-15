@@ -213,7 +213,6 @@ private:
 
 	std::vector<uint8_t> m_recv_data(uint32_t timeout);
 	//TODO(sigrudds1) Add error log file using the username in the filename
-	void m_print_error(std::string error);
 	void m_handle_server_error(const std::vector<uint8_t> src_buffer, size_t &last_pos);
 	void m_server_init_handshake_v10(const std::vector<uint8_t> &src_buffer);
 	void m_update_password(String password);

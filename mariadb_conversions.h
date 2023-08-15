@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  conversions.h                                                        */
+/*  mariadb_conversions.h                                                        */
 /*************************************************************************/
 /*                     This file is part of the                          */
 /*             Maria and Mysql database connection module                */
@@ -29,8 +29,8 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef CONVERSIONS_H
-#define CONVERSIONS_H
+#ifndef MARIADB_CONVERSIONS_H
+#define MARIADB_CONVERSIONS_H
 
 #include <core/io/ip.h>
 #include <core/io/ip_address.h>
@@ -94,4 +94,4 @@ std::vector<uint8_t> value_to_bytestream_vec(T value, size_t stream_bytes) {
 	return vec;
 }
 
-#endif // !CONVERSIONS_H
+#endif // !MARIADB_CONVERSIONS_H
