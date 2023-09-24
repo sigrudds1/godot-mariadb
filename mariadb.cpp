@@ -602,6 +602,9 @@ Variant MariaDB::query(String sql_stmt) {
 
 	srvr_response = m_recv_data(1000);
 	// TODO - Check size
+	if (srvr_response.size() == 0){
+		return ERR_NO_RESPONSE;
+	}
 	
 	pkt_len = m_dec_3byte_pkt_len_at(srvr_response, pkt_itr);
 	// print_line(pkt_len);
