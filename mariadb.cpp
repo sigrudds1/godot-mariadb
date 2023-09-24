@@ -365,6 +365,8 @@ Vector<uint8_t> MariaDB::m_recv_data(uint32_t p_timeout) {
 		time_lapse = OS::get_singleton()->get_ticks_msec() - start_msec;
 	}
 
+	// print_line("m_recv_data time_lapse:", time_lapse, " data:", out_buffer);
+
 	return out_buffer;
 }
 
@@ -652,8 +654,12 @@ Variant MariaDB::query(String sql_stmt) {
 	_stream.put_data(send_buffer_vec.ptr(), send_buffer_vec.size());
 
 	srvr_response = m_recv_data(1000);
-	// TODO - Check size
+	if (srvr_response.size() == 0){
+		return (uint32_t)ERR_NO_RESPONSE;
+	}
 	
+	// TODO - Check other sizes
+
 	pkt_len = m_dec_3byte_pkt_len_at(srvr_response, pkt_itr);
 	// print_line(pkt_len);
 	//uint8_t seq_num = srvr_response[++pkt_itr];
