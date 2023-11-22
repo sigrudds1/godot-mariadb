@@ -760,23 +760,20 @@ Variant MariaDB::query(String sql_stmt) {
 	}
 	
 	Array arr;
+
+	_last_response =  PackedByteArray(srvr_response);
+	// print_line(_last_response);
 	//process values
 	while (!done && pkt_itr < (size_t)srvr_response.size()) {
-		if (pkt_itr + 3 >= (size_t)srvr_response.size()) {
-			srvr_response.append_array(m_recv_data(1000));
-		}
-		
-		pkt_len = m_dec_3byte_pkt_len_at(srvr_response, ++pkt_itr);
-		if (pkt_itr + pkt_len >= (size_t)srvr_response.size()) {
-				srvr_response.append_array(m_recv_data(1000));
-		}
-
+		pkt_len = m_decode_pkt_len_at(srvr_response, ++pkt_itr);
 		//seq_num = srvr_response[++pkt_itr];
 		++pkt_itr;
 
 		Dictionary dict;
+		
 		for (size_t itr = 0; itr < col_cnt; ++itr) {
 			test = srvr_response[pkt_itr + 1];
+			// print_line(test, ":", col_cnt);
 			if (test == 0xFF) {
 				//ERR_Packet
 				int err = srvr_response[pkt_itr + 2] + (srvr_response[pkt_itr + 3] << 8);
@@ -792,23 +789,29 @@ Variant MariaDB::query(String sql_stmt) {
 				done = true;
 			} else {
 				if (test == 0xFE) {
+					++pkt_itr;
 					len_encode = bytes_to_num_itr_pos<uint64_t>(srvr_response.ptr(), 8, pkt_itr);
-				} else if (col_cnt == 0xFD) {
+				} else if (test == 0xFD) {
+					//null value need to skip
+					++pkt_itr;
 					len_encode = bytes_to_num_itr_pos<uint64_t>(srvr_response.ptr(), 3, pkt_itr);
-				} else if (col_cnt == 0xFC) {
+				} else if (test == 0xFC) {
+					//null value need to skip
+					++pkt_itr;
 					len_encode = bytes_to_num_itr_pos<uint64_t>(srvr_response.ptr(), 2, pkt_itr);
 				} else if (test == 0xFB) {
 					//null value need to skip
 					len_encode = 0;
 					++pkt_itr;
+				} else if (col_cnt == 0xFD) {
+					len_encode = bytes_to_num_itr_pos<uint64_t>(srvr_response.ptr(), 3, pkt_itr);
+				} else if (col_cnt == 0xFC) {
+					len_encode = bytes_to_num_itr_pos<uint64_t>(srvr_response.ptr(), 2, pkt_itr);
 				} else {
 					len_encode = srvr_response[++pkt_itr];
 				}
 
 				if (len_encode > 0) {
-					if (pkt_itr + len_encode >= (size_t)srvr_response.size()) {
-						srvr_response.append_array(m_recv_data(1000));
-					}
 					dict[col_data[itr].name] = m_get_type_data(col_data[itr].field_type,
 							m_vbytes_to_str_at(srvr_response, pkt_itr, len_encode));
 				} else {
