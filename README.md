@@ -1,5 +1,8 @@
 # godot-mariadb
-A Godot engine module for MariaDB that is a MIT licensed connector separate from the Maria/MySQL GPL connectors and will compile on Windows, Linux, probably Mac.  
+A Godot engine module for MariaDB that is a MIT licensed connector separate from the Maria/MySQL GPL connectors and will compile on Windows, Linux, probably Mac. 
+
+**Please make note**  
+Although this will compile on Windows, it is suggested to use on a Linux server, VM's are easy to install, plus you get advantages of packet manipulation in order to simulate packet loss and latency; Windows 10/11 are not designed to be servers, expecialy Home versions and there have been reports of this module not working properly on them.  
   
 Originally created for Godot 3.4 and currently works on 3.5.1 and 4.0.3, you will need to checkout the relevant release or branch.  
 
@@ -103,20 +106,3 @@ Returns the vector<uint8_t> send to the server, this includes the protocol heade
 **Get the stream received from the DB server response**  
 var pba : PoolByteArray = db.get_last_response()  
 Returns the vector<uint8_t> recieved from the server.
-
-**Stream Packet Control**  
-Stream Read Delay in milliseconds, default is 0, min is 0, max is 100  
-var packet_delay_msec: int = db.get_packet_delay()  
-db.set_packet_delay(packet_delay_msec)  
-
-Max Packet Size, default is 16384, min is 16, max is 0xffffff  
-var max_packet_size: int = db.get_packet_max_size()  
-db.set_pacekt_max_size(max_packet_size)  
-
-These methods are used to help with stream buffer issues, on large queries only, some are experiencing with this module in Godot 4.  
-If you are experienceing and crash that mentions cowdata and the idexes are equal, with large queries, this is most likely the issue and you will need to play with the parameters to get the best performance, try to ensure the largest packet size that will not crash as multiple buffer reads is the biggest performance hit vs a small msec delay between reads.  
-It is better to have a 16k read with 5 msec delay vs 2k reads with 1 msec delay as a temp buffer is concatenated until the stream buffer is found empty and this is the most heavy load; I have found no more than 1 msec is needed in any case though, you might even be able to set it to 0 as the time needed to concatenate the temp buffer might be enough, if the buffer does not reach the set max value the delay is not ran.  
-  
-tldr;  
-There are a couple issues that can cause this module to crash Godot, the size of the buffer seems to be the biggest issue; some Docker containers have a buffer size of less than 4096 bytes or VM having a buffer of 16384 byte, so when StreamPeerTCP reads the buffer and the data is larger it is incomplete and cannot create a PackedByteArray as it is expecting more indexes that are not there and Godot crashes. By limiting the read size seems to solve the problem so I added multiple reads of the buffer and concatentate them into a PackedByteArray based on the parameter packet_maz_size.  
-The other issue I have experiences is the buffer is not filled between reads so I have also added a delay parameter between reads to help ensure the buffer is filled before each read.  

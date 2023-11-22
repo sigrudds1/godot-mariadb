@@ -765,7 +765,7 @@ Variant MariaDB::query(String sql_stmt) {
 	// print_line(_last_response);
 	//process values
 	while (!done && pkt_itr < (size_t)srvr_response.size()) {
-		pkt_len = m_decode_pkt_len_at(srvr_response, ++pkt_itr);
+		pkt_len = m_dec_3byte_pkt_len_at(srvr_response, ++pkt_itr);
 		//seq_num = srvr_response[++pkt_itr];
 		++pkt_itr;
 
