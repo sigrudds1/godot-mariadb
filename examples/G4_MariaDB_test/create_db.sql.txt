@@ -1,3 +1,5 @@
+INSTALL PLUGIN IF NOT EXISTS ed25519 SONAME 'auth_ed25519';
+
 CREATE DATABASE IF NOT EXISTS `Godot_Test` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci */;
 
 CREATE TABLE IF NOT EXISTS Godot_Test.`many_columns` (
@@ -263,7 +265,7 @@ CREATE TABLE IF NOT EXISTS Godot_Test.`many_records` (
   `map_id` tinyint(3) unsigned NOT NULL,
   `text_field` text DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=41011 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE USER IF NOT EXISTS `godot_user`@'localhost' IDENTIFIED VIA ed25519 USING PASSWORD('secret');
 CREATE USER IF NOT EXISTS `godot_user`@'::1' IDENTIFIED VIA ed25519 USING PASSWORD('secret');
