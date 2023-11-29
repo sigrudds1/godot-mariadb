@@ -1,9 +1,8 @@
 # godot-mariadb
-A Godot engine module for MariaDB that is a MIT licensed connector separate from the Maria/MySQL GPL connectors and will compile on Windows, Linux, probably Mac.  
+A Godot engine module for MariaDB that is a MIT licensed connector separate from the Maria/MySQL GPL connectors.  
+This module will compile on Linux, Windows, probably Mac. However, it is extremely suggested that you use this on Linux, there have been reports of unconfirmed Windows issues.  
   
-Originally created for Godot 3.4 and currently works on 3.5.1 and 4.0.3, you will need to checkout the relevant release or branch.  
-  
-Since the gdscript is different for each of the major releases, I removed the code examples from main, you can find them in the individual releases and branches.  
+Originally created for Godot 3.4 and currently works on 3.5.3 and 4.1.3, the main branch will stay current with Godot stable releases for Godot 3.x checkout the relevant release or branch.  
   
 **To compile on to a stable version you will need to clone the Godot repo...**  
 git clone https://github.com/godotengine/godot.git  
