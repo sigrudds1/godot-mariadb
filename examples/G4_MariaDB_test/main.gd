@@ -51,25 +51,11 @@ func _run_db() -> void:
 #		print(stmt)
 		var qry = db.query(stmt)
 		if typeof(qry) == TYPE_ARRAY:
-#			if qry.size() > 0:
-#				if qry[0].has("text_field"):
-#					for i in qry.size():
-#						if qry[i]["text_field"] != null:
-#							var string: String = str(qry[i]["text_field"])
-#							var strlen: int = string.length()
-#							if strlen >= 20:
-#								print(qry[i]["text_field"].left(10), qry[i]["text_field"].right(10))
-#							else:
-#								print(string.left(strlen >> 1), string.right(strlen >> 1))
-#
-#				print("column count:", qry[0].size())
-		#	print("\n", db.get_last_response())
-#			var end_uticks := Time.get_ticks_usec()
+			var end_uticks := Time.get_ticks_usec()
 			print("total records received:", qry.size(), " time:", Time.get_ticks_usec() - start_uticks, " usecs itr:", itr)
 		else:
 			%Timer.stop()
-			print(itr)
-#			print(stmt)
+			print(stmt)
 			print("itr:", itr, " - ERROR:", qry)
 		
 		itr += 1
@@ -94,6 +80,7 @@ func _insert_many_columns() -> void:
 	for i in range(1, 253):
 		stmt += "(%d)" % i
 	
+	stmt += ";"
 	print(stmt)
 	var err = db.query(stmt)
 	if err != OK:
@@ -102,10 +89,11 @@ func _insert_many_columns() -> void:
 
 func _insert_many_records() -> void:
 	var stmt: String = "INSERT INTO Godot_Test.`many_records (type, zone_id, player_id, map_id, " +\
-			"text_field VALUES " 
+			"text_field) VALUES " 
 	for i in 10:
 		stmt += "(%d, %d, %d, %d, %s)" % [i * 10 + 1, i * 10 + 2, i * 10 + 3, i * 10 + 4, "Some text for record %d" % i]
 	
+	stmt += ";"
 	print(stmt)
 	var err = db.query(stmt)
 	if err != OK:
