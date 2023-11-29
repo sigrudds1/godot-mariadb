@@ -1,15 +1,12 @@
 /*************************************************************************/
-/*  auth_ed25519.h                                                   */
+/*  mariadb_auth.h                                                     */
 /*************************************************************************/
-/*                     This file is part of the                          */
-/*             Maria and Mysql database connection module                */
-/*                    for use in the Godot Engine                        */
+/*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
-/* This file was derived from information found at                       */
-/* https://tools.ietf.org/html/rfc8032#page-44                           */
 /*************************************************************************/
-/* Copyright (c) 2021 Shawn Shipton. https://vikingtinkerer.com          */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -31,16 +28,15 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef AUTH_ED25519_H
-#define AUTH_ED25519_H
+#ifndef MARIADB_AUTH_H
+#define MARIADB_AUTH_H
 
-#include <stddef.h>
-#include <stdint.h>
+#include "core/templates/vector.h"
 
-//REF https://security.stackexchange.com/questions/218046/how-does-mariadbs-ed25519-auth-scheme-work
+Vector<uint8_t> get_caching_sha2_passwd_hash(Vector<uint8_t> p_sha256_hashed_passwd, Vector<uint8_t> p_srvr_salt);
 
-void ed25519_sign_msg(const uint8_t *pwd_sha512_src, const uint8_t *message_src, size_t message_len, uint8_t *signature_dst);
-void ed25519_create_keypair(const uint8_t *pwd_sha512_src, uint8_t *private_key_dst, uint8_t *public_key_dst);
-void ed25519_sign(const uint8_t *message_src, size_t message_len, const uint8_t *public_key_src, const uint8_t *private_key_src, uint8_t *signature_dst);
+Vector<uint8_t> get_client_ed25519_signature(Vector<uint8_t> p_sha512_hashed_passwd, Vector<uint8_t> p_svr_msg);
 
-#endif // !AUTH_ED25519_H
+Vector<uint8_t> get_mysql_native_password_hash(Vector<uint8_t> p_sha1_hashed_passwd, Vector<uint8_t> p_srvr_salt);
+
+#endif // !MARIADB_AUTH_H

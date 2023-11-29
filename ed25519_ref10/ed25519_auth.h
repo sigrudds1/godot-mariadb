@@ -1,6 +1,9 @@
-void register_mariadb_types();
-void unregister_mariadb_types();
-
+/*************************************************************************/
+/*  ed25519_auth.h                                                       */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
 /*************************************************************************/
 /* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
 /* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
@@ -25,12 +28,19 @@ void unregister_mariadb_types();
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef MARIADB_REGISTER_TYPES_H
-#define MARIADB_REGISTER_TYPES_H
+/* This file was derived from information found at                       */
+/* https://tools.ietf.org/html/rfc8032#page-44                           */
+/* REF https://security.stackexchange.com/questions/218046/how-does-mariadbs-ed25519-auth-scheme-work */
 
-#include "modules/register_module_types.h"
+#ifndef ED25519_AUTH_H
+#define ED25519_AUTH_H
 
-void initialize_mariadb_module(ModuleInitializationLevel p_level);
-void uninitialize_mariadb_module(ModuleInitializationLevel p_level);
+#include <stddef.h>
+#include <stdint.h>
 
-#endif // MARIADB_REGISTER_TYPES_H
+void ed25519_sign_msg(const uint8_t *pwd_sha512_src, const uint8_t *message_src, size_t message_len, uint8_t *signature_dst);
+void ed25519_create_keypair(const uint8_t *pwd_sha512_src, uint8_t *private_key_dst, uint8_t *public_key_dst);
+void ed25519_sign(const uint8_t *message_src, size_t message_len, const uint8_t *public_key_src, const uint8_t *private_key_src, uint8_t *signature_dst);
+
+
+#endif // !ED25519_AUTH_H

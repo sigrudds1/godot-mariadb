@@ -1,15 +1,12 @@
 /*************************************************************************/
-/*  precomputed_data.h                                                   */
+/*  ed25519_precomputed.h                                                   */
 /*************************************************************************/
-/*                     This file is part of the                          */
-/*             Maria and Mysql database connection module                */
-/*                    for use in the Godot Engine                        */
+/*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
-/* This file was derived from information found at                       */
-/* https://tools.ietf.org/html/rfc8032#page-44                           */
 /*************************************************************************/
-/* Copyright (c) 2021 Shawn Shipton. https://vikingtinkerer.com          */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -30,6 +27,14 @@
 /* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
+
+/* This file was derived from information found at                       */
+/* https://tools.ietf.org/html/rfc8032#page-44                           */ 
+
+#ifndef ED25519_PRECOMPUTED_H
+#define ED25519_PRECOMPUTED_H
+
+#include "ed25519_ge.h"
 
 static const ge_precomp Bi[8] = {
 	{
@@ -1421,3 +1426,5 @@ static const ge_precomp base[32][8] = {
 			},
 	},
 };
+
+#endif //!ED25519_PRECOMPUTED_H
