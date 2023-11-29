@@ -45,7 +45,6 @@ scons -j$(nproc) platform=linuxbsd target=editor arch=x86_64
 Godot 3.x  
 scons -j$(nproc) platform=x11  
   
-I will have a tutorial up on https://vikingtinkerer.com, once I feel it has been tested enough to be considered stable.  
 [Buy Me A Coffee](https://buymeacoffee.com/VikingTinkerer)  
   or  
 [Buy Me A Ko-Fi](https://ko-fi.com/vikingtinkerer)
