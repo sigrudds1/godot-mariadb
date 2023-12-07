@@ -41,8 +41,8 @@
 #include <core/io/ip.h>
 #include <core/io/ip_address.h>
 #include <core/io/stream_peer_tcp.h>
-#include "core/os/thread.h"
-#include "core/os/mutex.h"
+// #include "core/os/thread.h"
+// #include "core/os/mutex.h"
 #include "core/object/ref_counted.h"
 #include "core/string/ustring.h"
 #include "core/templates/vector.h"
@@ -157,11 +157,11 @@ private:
 	IPAddress _ip;
 	int _port = 0;
 
-	bool _running = true;
-	bool _tcp_polling = false;
-	Mutex _tcp_mutex;
-	Thread _tcp_thread;
-	Vector<uint8_t> _tcp_thread_data;
+	// bool _running = true;
+	// bool _tcp_polling = false;
+	// Mutex _tcp_mutex;
+	// Thread _tcp_thread;
+	// Vector<uint8_t> _tcp_thread_data;
 
 	String _protocol_ver;
 	String _server_ver_str;
@@ -180,7 +180,9 @@ private:
 	 * \param sequance	int
 	 */
 	void m_add_packet_header(Vector<uint8_t> &p_pkt, uint8_t p_pkt_seq);
-	void m_append_thread_data(PackedByteArray &p_data, const uint64_t p_timeout = 1000);
+
+	// void m_append_thread_data(PackedByteArray &p_data, const uint64_t p_timeout = 1000);
+
 	uint32_t m_chk_rcv_bfr(Vector<uint8_t> &bfr, int &bfr_size, const size_t cur_pos, const size_t need);
 
 	Error m_client_protocol_v41(const AuthType p_srvr_auth_type, const Vector<uint8_t> p_srvr_salt);
@@ -195,6 +197,7 @@ private:
 	AuthType m_get_server_auth_type(String p_srvr_auth_name);
 	Variant m_get_type_data(const int p_db_field_type, const PackedByteArray p_data);
 
+	Vector<uint8_t> m_recv_data();
 	Vector<uint8_t> m_recv_data(uint32_t p_timeout);
 	//TODO(sigrudds1) Add error log file using the username in the filename
 	void m_handle_server_error(const Vector<uint8_t> p_src_buffer, size_t &p_last_pos);

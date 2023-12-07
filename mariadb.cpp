@@ -50,11 +50,11 @@ MariaDB::MariaDB() {
 
 MariaDB::~MariaDB() {
 	disconnect_db();
-	_tcp_polling = false;
-	_running = false;
+	// _tcp_polling = false;
+	// _running = false;
 
-	if (_tcp_thread.is_started())
-		_tcp_thread.wait_to_finish();
+	// if (_tcp_thread.is_started())
+	// 	_tcp_thread.wait_to_finish();
 }
 
 //Bind all your methods used in this class
@@ -89,26 +89,27 @@ void MariaDB::m_add_packet_header(Vector<uint8_t> &p_pkt, uint8_t p_pkt_seq) {
 	p_pkt = t.duplicate();
 }
 
-void MariaDB::m_append_thread_data(PackedByteArray &p_data, const uint64_t p_timeout) {
-	int sz = 0;
-	uint64_t start = OS::get_singleton()->get_ticks_msec();
-	while (sz == 0 && OS::get_singleton()->get_ticks_msec() - start <= p_timeout) {
-		_tcp_mutex.lock();
-		sz = _tcp_thread_data.size();
-		if (sz > 0) {
-			p_data.append_array(_tcp_thread_data);
-			_tcp_thread_data.clear();
-		}
-		_tcp_mutex.unlock();
-		if (sz == 0) {
-			OS::get_singleton()->delay_usec(1000);
-		}
-	}
-}
+// void MariaDB::m_append_thread_data(PackedByteArray &p_data, const uint64_t p_timeout) {
+// 	int sz = 0;
+// 	uint64_t start = OS::get_singleton()->get_ticks_msec();
+// 	while (sz == 0 && OS::get_singleton()->get_ticks_msec() - start <= p_timeout) {
+// 		_tcp_mutex.lock();
+// 		sz = _tcp_thread_data.size();
+// 		if (sz > 0) {
+// 			p_data.append_array(_tcp_thread_data);
+// 			_tcp_thread_data.clear();
+// 		}
+// 		_tcp_mutex.unlock();
+// 		if (sz == 0) {
+// 			OS::get_singleton()->delay_usec(1000);
+// 		}
+// 	}
+// }
 
 uint32_t MariaDB::m_chk_rcv_bfr(Vector<uint8_t> &p_bfr, int &p_bfr_size, const size_t p_cur_pos, const size_t p_need) {
 	if (p_bfr_size - p_cur_pos < p_need)
-		m_append_thread_data(p_bfr);
+		// m_append_thread_data(p_bfr);
+		p_bfr.append_array(m_recv_data(1000));
 
 	p_bfr_size = p_bfr.size();
 	if (p_bfr_size - p_cur_pos < p_need) {
@@ -360,39 +361,39 @@ Error MariaDB::m_connect() {
 		ERR_FAIL_V_MSG(Error::FAILED, "Protocol version incompatible!");
 	}
 
-	_tcp_thread.start(m_tcp_thread_func, this);
+	// _tcp_thread.start(m_tcp_thread_func, this);
 
 	return Error::OK;
 } //m_connect
 
-void MariaDB::m_tcp_thread_func(void *_instance) {
-	MariaDB *inst = (MariaDB *)_instance;
+// void MariaDB::m_tcp_thread_func(void *_instance) {
+// 	MariaDB *inst = (MariaDB *)_instance;
 
-	int byte_cnt = 0;
-	Vector<uint8_t> rcv_bfr;
-	Vector<uint8_t> transfer_bfr;
+// 	int byte_cnt = 0;
+// 	Vector<uint8_t> rcv_bfr;
+// 	Vector<uint8_t> transfer_bfr;
 
-	while (inst->_running) {
-		while (inst->_tcp_polling) {
-			if (! inst->is_connected_db())
-				continue;
-			byte_cnt = inst->_stream.get_available_bytes();
-			if (byte_cnt > 0) {
-				rcv_bfr.resize(byte_cnt);
-				inst->_stream.get_data(rcv_bfr.ptrw(), byte_cnt);
-				transfer_bfr.append_array(rcv_bfr);
-			}
+// 	while (inst->_running) {
+// 		while (inst->_tcp_polling) {
+// 			if (! inst->is_connected_db())
+// 				continue;
+// 			byte_cnt = inst->_stream.get_available_bytes();
+// 			if (byte_cnt > 0) {
+// 				rcv_bfr.resize(byte_cnt);
+// 				inst->_stream.get_data(rcv_bfr.ptrw(), byte_cnt);
+// 				transfer_bfr.append_array(rcv_bfr);
+// 			}
 
-			if (transfer_bfr.size() > 0) {
-				inst->_tcp_mutex.lock();
-				inst->_tcp_thread_data.append_array(transfer_bfr);
-				transfer_bfr.clear();
-				inst->_tcp_mutex.unlock();
-			}
-		}
-		OS::get_singleton()->delay_usec(1000);
-	}
-}
+// 			if (transfer_bfr.size() > 0) {
+// 				inst->_tcp_mutex.lock();
+// 				inst->_tcp_thread_data.append_array(transfer_bfr);
+// 				transfer_bfr.clear();
+// 				inst->_tcp_mutex.unlock();
+// 			}
+// 		}
+// 		OS::get_singleton()->delay_usec(1000);
+// 	}
+// }
 
 Variant MariaDB::m_get_type_data(const int p_db_field_type, const PackedByteArray p_data) {
 	switch (p_db_field_type) {
@@ -430,6 +431,17 @@ MariaDB::AuthType MariaDB::m_get_server_auth_type(String p_srvr_auth_name) {
 	}
 	//TODO(sigrudds1) Add cached_sha2 for mysql
 	return server_auth_type;
+}
+
+Vector<uint8_t> MariaDB::m_recv_data() {
+	int	byte_cnt = _stream.get_available_bytes();
+	Vector<uint8_t> recv_buffer;
+	if (byte_cnt > 0) {
+		recv_buffer.resize(byte_cnt);
+		_stream.get_data(recv_buffer.ptrw(), byte_cnt);
+	}
+
+	return recv_buffer;
 }
 
 Vector<uint8_t> MariaDB::m_recv_data(uint32_t p_timeout) {
@@ -652,8 +664,8 @@ Error MariaDB::connect_db(String p_host, int p_port, String p_dbname, String p_u
 		_ip = IP::get_singleton()->resolve_hostname(p_host, (IP::Type)_ip_type);
 	}
 	_port = p_port;
-	_tcp_polling = false;
-	_running = true;
+	// _tcp_polling = false;
+	// _running = true;
 
 	_client_auth_type = p_authtype;
 	_is_pre_hashed = p_is_prehashed;
@@ -687,7 +699,7 @@ Error MariaDB::connect_db(String p_host, int p_port, String p_dbname, String p_u
 }
 
 void MariaDB::disconnect_db() {
-	_tcp_polling = false;
+	// _tcp_polling = false;
 	if (is_connected_db()) {
 		//say goodbye too the server
 		uint8_t output[5] = { 0x01, 0x00, 0x00, 0x00, 0x01 };
@@ -724,11 +736,10 @@ Variant MariaDB::query(String sql_stmt) {
 	if (!_authenticated)
 		return (uint32_t)ERR_AUTH_FAILED;
 
-	_tcp_polling = true;
+	// _tcp_polling = true;
 
 	_last_query = sql_stmt;
 	Vector<uint8_t> send_buffer_vec;
-	Vector<uint8_t> srvr_response;
 	int bfr_size = 0;
 
 	/* For interest of speed over memory I am working with the entire buffer
@@ -752,12 +763,12 @@ Variant MariaDB::query(String sql_stmt) {
 	m_add_packet_header(send_buffer_vec, 0);
 
 	_last_transmitted = send_buffer_vec;
-	_tcp_mutex.lock();
+	// _tcp_mutex.lock();
 	_stream.put_data(send_buffer_vec.ptr(), send_buffer_vec.size());
-	_tcp_mutex.unlock();
+	// _tcp_mutex.unlock();
 
-
-	m_append_thread_data(srvr_response);
+	Vector<uint8_t> srvr_response = m_recv_data(1000);
+	// m_append_thread_data(srvr_response);
 	bfr_size = srvr_response.size();
 
 	// srvr_response = m_recv_data(1000);
@@ -861,8 +872,6 @@ Variant MariaDB::query(String sql_stmt) {
 		uint8_t remaining = srvr_response[++pkt_itr];
 		ERR_FAIL_COND_V_EDMSG(m_chk_rcv_bfr(srvr_response, bfr_size, pkt_itr, remaining) != OK, ERR_PACKET_LENGTH_MISMATCH,
 				vformat("ERR_PACKET_LENGTH_MISMATCH rcvd %d expect %d", bfr_size, pkt_itr + remaining));
-		if (srvr_response.size() - pkt_itr < remaining)
-			m_append_thread_data(srvr_response);
 		// ++pkt_itr; //remaining bytes in packet section
 
 		//	int<2> character set number
@@ -964,7 +973,7 @@ Variant MariaDB::query(String sql_stmt) {
 		if (!done)
 			arr.push_back(dict);
 	}
-	_tcp_polling = false;
+	// _tcp_polling = false;
 	_last_response = PackedByteArray(srvr_response);
 
 	return Variant(arr);
