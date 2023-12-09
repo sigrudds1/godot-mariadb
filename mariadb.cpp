@@ -396,27 +396,28 @@ Error MariaDB::m_connect() {
 // }
 
 Variant MariaDB::m_get_type_data(const int p_db_field_type, const PackedByteArray p_data) {
+	String rtn_val;
+	rtn_val.parse_utf8((const char *)p_data.ptr(), p_data.size());
 	switch (p_db_field_type) {
 		case 1: // MYSQL_TYPE_TINY
 		case 2: // MYSQL_TYPE_SHORT
 		case 3: // MYSQL_TYPE_LONG
 		case 8: // MYSQL_TYPE_LONGLONG
-			return String((const char *)p_data.ptr()).to_int();
+			return rtn_val.to_int();
 			break;
 		case 0: // MYSQL_TYPE_DECIMAL
 		case 4: // MYSQL_TYPE_FLOAT
-			return String((const char *)p_data.ptr()).to_float();
+			return rtn_val.to_float();
 			break;
 		case 5: // MYSQL_TYPE_DOUBLE
 			if (_dbl_to_string) {
-				return String((const char *)p_data.ptr());
+				return rtn_val;
 			} else {
-				return String((const char *)p_data.ptr()).to_float();
+				return rtn_val.to_float();
 			}
 			break;
 		default:
-			String rtn_val;
-			rtn_val.parse_utf8((const char *)p_data.ptr(), p_data.size());
+
 			return rtn_val;
 	}
 	return 0;
@@ -517,11 +518,11 @@ String MariaDB::m_find_vbytes_str_at(Vector<uint8_t> p_buf, size_t &p_start_pos)
 
 PackedByteArray MariaDB::m_get_pkt_bytes(const Vector<uint8_t> &p_src_buf, size_t &p_start_pos,
 		const size_t p_byte_cnt){
+
 	PackedByteArray rtn;
 	if (p_byte_cnt <= 0 || p_start_pos + p_byte_cnt > (size_t)p_src_buf.size()) {
 		return rtn;
 	}
-
 	rtn = p_src_buf.slice(p_start_pos, p_start_pos + p_byte_cnt);
 	p_start_pos += p_byte_cnt - 1;
 	return rtn;
@@ -960,7 +961,6 @@ Variant MariaDB::query(String sql_stmt) {
 
 				ERR_FAIL_COND_V_EDMSG(m_chk_rcv_bfr(srvr_response, bfr_size, pkt_itr, len_encode) != OK, ERR_PACKET_LENGTH_MISMATCH,
 						vformat("ERR_PACKET_LENGTH_MISMATCH rcvd %d expect %d", bfr_size, pkt_itr + len_encode));
-
 				if (len_encode > 0) {
 					PackedByteArray data = m_get_pkt_bytes(srvr_response, ++pkt_itr, len_encode);
 					dict[col_data[itr].name] = m_get_type_data(col_data[itr].field_type, data);
