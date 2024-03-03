@@ -403,6 +403,8 @@ Variant MariaDB::m_get_type_data(const int p_db_field_type, const PackedByteArra
 		case 2: // MYSQL_TYPE_SHORT
 		case 3: // MYSQL_TYPE_LONG
 		case 8: // MYSQL_TYPE_LONGLONG
+		case 9: // MYSQL_TYPE_INT24 aka MEDIUM INT
+		case 13: // MYSQL_TYPE_YEAR
 			return rtn_val.to_int();
 			break;
 		case 0: // MYSQL_TYPE_DECIMAL
