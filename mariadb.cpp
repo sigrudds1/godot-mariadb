@@ -303,6 +303,7 @@ Variant MariaDB::m_get_gd_type_data(const int db_field_type, const String data) 
 		case 2: // MYSQL_TYPE_SHORT
 		case 3: // MYSQL_TYPE_LONG
 		case 8: // MYSQL_TYPE_LONGLONG
+		case 9: // MYSQL_TYPE_INT24 aka MediumInt
 			return data.to_int();
 			break;
 		case 0: // MYSQL_TYPE_DECIMAL
