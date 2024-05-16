@@ -723,7 +723,7 @@ Variant MariaDB::query(String sql_stmt) {
 
 		Dictionary dict;
 		for (int itr = 0; itr < col_cnt; ++itr) {
-			test = srvr_response[pkt_itr + 1];
+			test = srvr_response[++pkt_itr];
 			if (test == 0xFF) {
 				//ERR_Packet
 				int err = srvr_response[pkt_itr + 2] + (srvr_response[pkt_itr + 3] << 8);
@@ -740,16 +740,15 @@ Variant MariaDB::query(String sql_stmt) {
 			} else {
 				if (test == 0xFE) {
 					len_encode = bytes_to_num_itr_pos<int>(srvr_response.ptr(), 8, pkt_itr);
-				} else if (col_cnt == 0xFD) {
+				} else if (test == 0xFD) {
 					len_encode = bytes_to_num_itr_pos<int>(srvr_response.ptr(), 3, pkt_itr);
-				} else if (col_cnt == 0xFC) {
+				} else if (test == 0xFC) {
 					len_encode = bytes_to_num_itr_pos<int>(srvr_response.ptr(), 2, pkt_itr);
 				} else if (test == 0xFB) {
 					//null value need to skip
 					len_encode = 0;
-					++pkt_itr;
 				} else {
-					len_encode = srvr_response[++pkt_itr];
+					len_encode = srvr_response[pkt_itr];
 				}
 
 				if (len_encode > 0) {
