@@ -341,7 +341,7 @@ Vector<uint8_t> MariaDB::m_recv_data(int p_timeout) {
 	int start_msec = OS::get_singleton()->get_ticks_msec();
 	int time_lapse = 0;
 	bool data_rcvd = false;
-	
+
 	while (is_connected_db() && time_lapse < p_timeout) {
 		byte_cnt = _stream.get_available_bytes();
 		if (byte_cnt > 0) {
@@ -585,7 +585,7 @@ Variant MariaDB::query(String sql_stmt) {
 	_last_query = sql_stmt;
 	Vector<uint8_t> send_buffer_vec;
 	Vector<uint8_t> srvr_response;
-	
+
 	int pkt_itr = 0;
 	int pkt_len; //techinically section length everything arrives in one stream packet
 	int len_encode = 0;
@@ -606,7 +606,7 @@ Variant MariaDB::query(String sql_stmt) {
 	if (srvr_response.size() == 0){
 		return ERR_NO_RESPONSE;
 	}
-	
+
 	pkt_len = m_dec_3byte_pkt_len_at(srvr_response, pkt_itr);
 	// print_line(pkt_len);
 	//uint8_t seq_num = srvr_response[++pkt_itr];
@@ -623,11 +623,11 @@ Variant MariaDB::query(String sql_stmt) {
 		m_handle_server_error(srvr_response, pkt_itr);
 		return err;
 	} else if (test == 0xFE) {
-		col_cnt = bytes_to_num_itr_pos<int>(srvr_response.ptr(), 8, pkt_itr);
+		col_cnt = bytes_to_num_itr_pos<int>(srvr_response.ptr(), 8, ++pkt_itr);
 	} else if (test == 0xFD) {
-		col_cnt = bytes_to_num_itr_pos<int>(srvr_response.ptr(), 3, pkt_itr);
+		col_cnt = bytes_to_num_itr_pos<int>(srvr_response.ptr(), 3, ++pkt_itr);
 	} else if (test == 0xFC) {
-		col_cnt = bytes_to_num_itr_pos<int>(srvr_response.ptr(), 2, pkt_itr);
+		col_cnt = bytes_to_num_itr_pos<int>(srvr_response.ptr(), 2, ++pkt_itr);
 	} else if (test == 0xFB) {
 		//null value
 		//TODO(sigrudds1) needs investigation, not sure why this would happen
@@ -705,14 +705,14 @@ Variant MariaDB::query(String sql_stmt) {
 	if (!dep_eof) {
 		pkt_itr += 5; //bypass for now
 	}
-	
+
 	Array arr;
 	//process values
 	while (!done && pkt_itr < (int)srvr_response.size()) {
 		if (pkt_itr + 3 >= (int)srvr_response.size()) {
 			srvr_response.append_array(m_recv_data(1000));
 		}
-		
+
 		pkt_len = m_dec_3byte_pkt_len_at(srvr_response, ++pkt_itr);
 		if (pkt_itr + pkt_len >= (int)srvr_response.size()) {
 				srvr_response.append_array(m_recv_data(1000));
