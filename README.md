@@ -1,3 +1,10 @@
+<h1 align="center" style="font-size: 2.5em;">Announcement</h1>
+<h3 align="center" style="font-size: 2.5em;">
+    <a href="https://github.com/sigrudds1/Godot-MariaDB-Connector-Plugin" style="text-decoration: none; color: inherit;">
+        Godot MariaDB Connector Plugin
+    </a>
+</h3>
+<h4 align="center" style="font-size: 2.5em;">Now available on the Godot AssetLib  version 4.3+</h4>
 # godot-mariadb
 A Godot engine module for MariaDB that is a MIT licensed connector separate from the Maria/MySQL GPL connectors.  
 This module will compile on Linux, Windows, probably Mac. However, it is extremely suggested that you use this on Linux, there have been reports of unconfirmed Windows issues.  
